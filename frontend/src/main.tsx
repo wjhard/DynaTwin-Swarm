@@ -10,8 +10,10 @@ type Machine = {
   id: string;
   name: string;
   machine_type: string;
+  capabilities?: string[];
   status: string;
   efficiency: number;
+  current_order_id?: string | null;
   temperature_c: number;
 };
 
@@ -23,8 +25,18 @@ type Order = {
 };
 
 type Material = { id: string; name: string; quantity: number; reserved: number; unit: string };
+type Alert = { id: string; machine_id: string; alert_type: string; severity: string; message: string; minute: number; requires_stop: boolean };
 type Trace = { agent_name: string; decision: { risk_level: string; recommended_action: string; evidence: string[]; confidence: number; gap: string } };
 type ScheduleItem = { order_id: string; operation_id: string; machine_id: string; start_minute: number; end_minute: number; status: string };
+type FactoryState = {
+  now_minute: number;
+  machines: Machine[];
+  orders: Order[];
+  materials: Material[];
+  alerts: Alert[];
+  events: Record<string, unknown>[];
+  metadata: Record<string, unknown>;
+};
 
 type RunResult = {
   task_id: string;
@@ -37,6 +49,8 @@ type RunResult = {
   risk_summary: Record<string, unknown>;
   metrics: Record<string, unknown>;
 };
+
+const API_BASE = (import.meta.env.VITE_API_BASE || "http://127.0.0.1:8010").replace(/\/$/, "");
 
 const fallbackMachines: Machine[] = [
   { id: "M1", name: "Cutter 1", machine_type: "cutting", status: "busy", efficiency: 1, temperature_c: 25 },
@@ -86,7 +100,7 @@ function buildFlow(topology: string): { nodes: Node[]; edges: Edge[] } {
 }
 
 async function postJson(path: string, body: unknown) {
-  const response = await fetch(path, {
+  const response = await fetch(`${API_BASE}${path}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body)
@@ -95,15 +109,27 @@ async function postJson(path: string, body: unknown) {
   return response.json();
 }
 
+async function getJson(path: string) {
+  const response = await fetch(`${API_BASE}${path}`);
+  if (!response.ok) throw new Error(`${path} failed: ${response.status}`);
+  return response.json();
+}
+
 function App() {
   const [result, setResult] = useState<RunResult | null>(null);
+  const [factoryState, setFactoryState] = useState<FactoryState | null>(null);
   const [events, setEvents] = useState<Record<string, unknown>[]>([]);
+  const [runLog, setRunLog] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
-  const machines = fallbackMachines;
-  const orders = fallbackOrders;
-  const materials = fallbackMaterials;
+  const machines = factoryState?.machines?.length ? factoryState.machines : fallbackMachines;
+  const orders = factoryState?.orders?.length ? factoryState.orders : fallbackOrders;
+  const materials = factoryState?.materials?.length ? factoryState.materials : fallbackMaterials;
+  const displayEvents = events.length ? events : factoryState?.events ?? [];
+  const alertCount = factoryState?.alerts?.length ?? 0;
+  const operationCount = orders.reduce((count, order) => count + order.operations.length, 0);
+  const latestScenario = String(factoryState?.metadata?.scenario ?? "not loaded");
   const topology = result?.selected_topology ?? "high_risk_review";
   const flow = useMemo(() => buildFlow(topology), [topology]);
   const chartData = result?.best_plan.items.map((item) => ({
@@ -112,8 +138,33 @@ function App() {
   })) ?? [];
 
   useEffect(() => {
-    runScenario("main");
+    void bootDemo();
   }, []);
+
+  function appendLog(message: string) {
+    const time = new Date().toLocaleTimeString();
+    setRunLog((previous) => [`${time} ${message}`, ...previous].slice(0, 6));
+  }
+
+  async function bootDemo() {
+    try {
+      await refreshState();
+    } finally {
+      await runScenario("main");
+    }
+  }
+
+  async function refreshState() {
+    const [statePayload, eventsPayload] = await Promise.all([getJson("/api/state"), getJson("/api/events/latest")]);
+    if (Array.isArray(statePayload?.machines)) {
+      setFactoryState(statePayload as FactoryState);
+    }
+    if (Array.isArray(eventsPayload?.events)) {
+      setEvents(eventsPayload.events);
+    } else if (Array.isArray(statePayload?.events)) {
+      setEvents(statePayload.events);
+    }
+  }
 
   async function runScenario(scenario: string) {
     setBusy(true);
@@ -121,22 +172,70 @@ function App() {
     try {
       const payload = await postJson("/api/tasks/run", { scenario });
       setResult(payload);
-      setEvents([...(payload.best_plan?.violations ?? []), ...(payload.agent_traces ?? []).slice(0, 3).map((trace: Trace) => ({ type: "agent_trace", agent: trace.agent_name }))]);
+      await refreshState();
+      appendLog(`scenario ${scenario} -> ${payload.selected_topology}`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Request failed");
+      const message = err instanceof Error ? err.message : "Request failed";
+      setError(message);
+      appendLog(message);
     } finally {
       setBusy(false);
     }
   }
 
   async function triggerMachineAlert() {
-    await postJson("/api/events/machine-alert", { machine_id: "M3" });
+    setBusy(true);
+    setError("");
+    try {
+      await postJson("/api/events/machine-alert", { machine_id: "M3" });
+      await refreshState();
+      appendLog("event machine_alert M3");
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Request failed";
+      setError(message);
+      appendLog(message);
+      setBusy(false);
+      return;
+    }
+    setBusy(false);
     await runScenario("single_machine_failure");
   }
 
   async function createUrgentOrder() {
-    await postJson("/api/events/order-created", { order_id: "O4" });
+    setBusy(true);
+    setError("");
+    try {
+      await postJson("/api/events/order-created", { order_id: "O4" });
+      await refreshState();
+      appendLog("event order_created O4");
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Request failed";
+      setError(message);
+      appendLog(message);
+      setBusy(false);
+      return;
+    }
+    setBusy(false);
     await runScenario("multi_resource_conflict");
+  }
+
+  async function resetDemo() {
+    setBusy(true);
+    setError("");
+    try {
+      await postJson("/api/demo/reset", {});
+      setResult(null);
+      await refreshState();
+      appendLog("demo reset");
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Request failed";
+      setError(message);
+      appendLog(message);
+      setBusy(false);
+      return;
+    }
+    setBusy(false);
+    await runScenario("normal");
   }
 
   return (
@@ -147,7 +246,7 @@ function App() {
           <p>Industrial digital twin scheduling dashboard</p>
         </div>
         <div className="status-strip">
-          {["PanguLM: mock", "MindIE: mock", "GaussDB: sqlite fallback", "OBS: local fallback", "IoTDA: local event bus", "EventGrid: local router", "FunctionGraph: local trigger", "ModelArts: local training"].map((item) => (
+          {[`API: ${API_BASE}`, "PanguLM: mock", "MindIE: mock", "GaussDB: sqlite fallback", "OBS: local fallback", "IoTDA: local event bus", "EventGrid: local router", "FunctionGraph: local trigger", "ModelArts: local training"].map((item) => (
             <span key={item}>{item}</span>
           ))}
         </div>
@@ -158,7 +257,16 @@ function App() {
         <button onClick={triggerMachineAlert} disabled={busy} title="Trigger M3 Overheat"><Thermometer size={17} />Trigger M3 Overheat</button>
         <button onClick={createUrgentOrder} disabled={busy} title="Create Urgent Order O4"><Plus size={17} />Create Urgent Order O4</button>
         <button onClick={() => runScenario("main")} disabled={busy} title="Run Composite Incident Demo"><Zap size={17} />Run Composite Incident Demo</button>
-        <button onClick={() => { setResult(null); setEvents([]); runScenario("normal"); }} disabled={busy} title="Reset Demo"><RotateCcw size={17} />Reset Demo</button>
+        <button onClick={resetDemo} disabled={busy} title="Reset Demo"><RotateCcw size={17} />Reset Demo</button>
+      </section>
+
+      <section className="run-strip">
+        <span>{busy ? "Running" : "Ready"}</span>
+        <span>Scenario: {latestScenario}</span>
+        <span>Machines: {machines.length}</span>
+        <span>Orders: {orders.length}</span>
+        <span>Operations: {operationCount}</span>
+        <span>Alerts: {alertCount}</span>
       </section>
 
       {error && <div className="error">{error}</div>}
@@ -170,7 +278,8 @@ function App() {
               <div className={`machine ${machine.status}`} key={machine.id}>
                 <strong>{machine.id}</strong>
                 <span>{machine.name}</span>
-                <small>{machine.status} · {machine.temperature_c}C</small>
+                <small>{machine.status} - {Math.round(machine.temperature_c)}C</small>
+                <small>{machine.current_order_id ? `job ${machine.current_order_id}` : machine.capabilities?.join(", ")}</small>
               </div>
             ))}
           </div>
@@ -183,6 +292,7 @@ function App() {
                   <td>{order.id}</td>
                   <td><span className={`pill ${order.priority}`}>{order.priority}</span></td>
                   <td>{minuteLabel(order.due_minute)}</td>
+                  <td>{order.operations.length} ops</td>
                 </tr>
               ))}
             </tbody>
@@ -192,12 +302,12 @@ function App() {
           {materials.map((material) => (
             <div className="material" key={material.id}>
               <span>{material.name}</span>
-              <strong>{material.quantity - material.reserved} {material.unit}</strong>
+              <strong>{material.quantity - material.reserved}/{material.quantity} {material.unit}</strong>
             </div>
           ))}
         </Panel>
         <Panel title="Risk" icon={<AlertTriangle size={18} />}>
-          <div className={`risk ${result?.task_profile?.risk_level ?? "critical"}`}>{String(result?.task_profile?.risk_level ?? "critical")}</div>
+          <div className={`risk ${String(result?.task_profile?.risk_level ?? "critical").toLowerCase()}`}>{String(result?.task_profile?.risk_level ?? "critical")}</div>
           <p>{result?.topology_selection?.reason ?? "high-risk equipment anomaly requires risk and critic review"}</p>
         </Panel>
       </section>
@@ -215,7 +325,7 @@ function App() {
           <div className="trace-list">
             {(result?.agent_traces ?? []).slice(0, 8).map((trace) => (
               <div className="trace" key={trace.agent_name}>
-                <div><strong>{trace.agent_name}</strong><span>{trace.decision.risk_level} · {Math.round(trace.decision.confidence * 100)}%</span></div>
+                <div><strong>{trace.agent_name}</strong><span>{trace.decision.risk_level} - {Math.round(trace.decision.confidence * 100)}%</span></div>
                 <p>{trace.decision.recommended_action}</p>
               </div>
             ))}
@@ -252,11 +362,12 @@ function App() {
           {(result?.alternative_plans ?? []).map((plan, index) => <p key={index}>{plan.objective}: {plan.items.length} operations</p>)}
         </Panel>
         <Panel title="Event Stream" icon={<Activity size={18} />}>
-          <div className="events">{events.map((event, index) => <code key={index}>{JSON.stringify(event)}</code>)}</div>
+          <div className="events">{displayEvents.map((event, index) => <code key={index}>{JSON.stringify(event)}</code>)}</div>
         </Panel>
         <Panel title="History" icon={<Clock size={18} />}>
           <p>{result?.task_id ?? "No task yet"}</p>
           <p>{result?.selected_topology ?? "Waiting for run"}</p>
+          <div className="events">{runLog.map((entry) => <code key={entry}>{entry}</code>)}</div>
         </Panel>
       </section>
     </main>

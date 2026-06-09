@@ -72,3 +72,11 @@ class DynaTwinService:
         event = {"type": "order_created", "order_id": order_id}
         self.repository.add_event(event)
         return state.model_dump(mode="json")
+
+    def reset_demo(self) -> Dict[str, Any]:
+        state = self.simulator.base_state()
+        state.metadata["scenario"] = "normal"
+        self.repository.save_state(state)
+        for event in state.events:
+            self.repository.add_event(event)
+        return state.model_dump(mode="json")

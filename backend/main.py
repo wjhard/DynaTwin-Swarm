@@ -4,6 +4,7 @@ import os
 from typing import Any, Dict
 
 from fastapi import FastAPI, WebSocket
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 from backend.service import DynaTwinService
@@ -18,6 +19,13 @@ def create_app(repository=None) -> FastAPI:
     repo = repository or SQLiteRepository(os.getenv("SQLITE_PATH", "./data/dynatwin.db"))
     service = DynaTwinService(repo, provider=os.getenv("LLM_PROVIDER", "mock"))
     app = FastAPI(title="DynaTwin-Swarm API")
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origin_regex=os.getenv("CORS_ALLOW_ORIGIN_REGEX", r"http://(localhost|127\.0\.0\.1):\d+"),
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
     app.state.repository = repo
     app.state.service = service
 
@@ -36,6 +44,10 @@ def create_app(repository=None) -> FastAPI:
     @app.post("/api/events/order-created")
     def order_created(payload: Dict[str, Any]) -> Dict[str, Any]:
         return app.state.service.order_created(payload.get("order_id", "O4"))
+
+    @app.post("/api/demo/reset")
+    def reset_demo() -> Dict[str, Any]:
+        return app.state.service.reset_demo()
 
     @app.get("/api/state")
     def state() -> Dict[str, Any]:

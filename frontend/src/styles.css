@@ -64,6 +64,23 @@ button {
 button:hover { background: #eef5f1; }
 button:disabled { opacity: 0.55; cursor: wait; }
 
+.run-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 10px 28px 0;
+  background: #f3f6f3;
+}
+
+.run-strip span {
+  border: 1px solid #d3dfd9;
+  background: #fff;
+  border-radius: 6px;
+  padding: 6px 9px;
+  font-size: 12px;
+  color: #263a36;
+}
+
 .grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -230,6 +247,6 @@ code {
   .topbar { display: grid; }
   .status-strip { justify-content: flex-start; }
   .grid, .split, .lower { grid-template-columns: 1fr; padding-left: 14px; padding-right: 14px; }
-  .toolbar { padding-left: 14px; padding-right: 14px; }
+  .toolbar, .run-strip { padding-left: 14px; padding-right: 14px; }
   .flow-wrap { height: 330px; }
 }
