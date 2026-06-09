@@ -44,3 +44,16 @@ The main scenario combines:
 - safety-first scheduling with alternatives and risk explanation.
 
 Additional scenarios cover normal scheduling, multi-resource conflict, single-machine failure, inventory shortage, and worker-skill mismatch.
+
+## Digital Twin Models
+
+Milestone 1 adds Pydantic models for machines, operations, orders, materials, workers, machine alerts, factory state, schedule plans, constraint violations, task profiles, ReflAct decisions, topology selections, and execution records.
+
+The simulator can be run locally:
+
+```powershell
+C:\Anaconda\python.exe scripts/simulate_factory.py --scenario main
+C:\Anaconda\python.exe scripts/simulate_factory.py --scenario normal --output data/normal_state.json
+```
+
+State can be stored in memory for tests or SQLite for the local demo.

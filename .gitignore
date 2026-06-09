@@ -187,6 +187,7 @@ datasets/gaia/*.json
 datasets/gaia/utils/*.jsonl
 
 /runs/
+/data/
 
 .$*.drawio.bkp
 /diagrams/*.pdf

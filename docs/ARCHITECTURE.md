@@ -27,6 +27,16 @@ FactorySimulator
 
 The digital twin stores machines, operations, orders, materials, workers, alerts, schedule plans, violations, topology selections, and execution records as Pydantic models. Stores include in-memory and SQLite implementations.
 
+Time is represented as minutes since the 08:00 shift start. This keeps due dates deterministic: 15:30 is 450, 16:00 is 480, and 18:00 is 600.
+
+The `FactorySimulator` provides:
+
+- base state generation with fixed random seed support.
+- named scenarios for normal scheduling, composite incident, multi-resource conflict, single-machine failure, inventory shortage, and worker-skill mismatch.
+- stepwise event application.
+- direct final abnormal state generation.
+- JSON import/export and a CLI wrapper at `scripts/simulate_factory.py`.
+
 ## ReflAct Agent Contract
 
 Each industrial agent returns a `ReflActDecision` with:
