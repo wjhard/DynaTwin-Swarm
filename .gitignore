@@ -188,6 +188,8 @@ datasets/gaia/utils/*.jsonl
 
 /runs/
 /data/
+/frontend/node_modules/
+/frontend/dist/
 
 .$*.drawio.bkp
 /diagrams/*.pdf

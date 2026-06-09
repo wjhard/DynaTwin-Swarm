@@ -82,3 +82,13 @@ Milestone 3 adds four topology templates:
 ## Backend
 
 The FastAPI backend exposes health, task execution, machine/order event injection, latest state/schedule/trace/topology/event/experiment reads, and a dashboard WebSocket. SQLite is the local default repository, with a GaussDB-compatible repository contract reserved for cloud adapter mode.
+
+## Frontend
+
+The React/Vite dashboard renders machine state, orders, inventory, event stream, dynamic topology, ReflAct decisions, Gantt schedule rows, risk level, alternative plans, history, selector output, and Huawei adapter mode. Run it with:
+
+```powershell
+cd frontend
+npm install
+npm run dev
+```

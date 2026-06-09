@@ -100,6 +100,8 @@ FastAPI exposes task, event, state, schedule, trace, topology, event, experiment
 
 `backend.service.DynaTwinService` owns the local orchestration path. `backend.main.create_app` accepts a repository for tests and defaults to `SQLiteRepository` for local runtime.
 
+The frontend is a single React/Vite page. It uses React Flow for topology visualization, Recharts for schedule metrics, and lucide-react icons for controls. The Vite dev server proxies `/api`, `/health`, and `/ws` to the FastAPI backend.
+
 ## Milestone Execution Notes
 
 The local repository was initialized because the downloaded source tree had no `.git` directory. External cloud connection status must remain `mock` or fallback unless real credentials are supplied and verified.
