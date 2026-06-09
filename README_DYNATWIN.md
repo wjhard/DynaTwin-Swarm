@@ -106,3 +106,10 @@ C:\Anaconda\python.exe scripts/generate_selector_dataset.py
 C:\Anaconda\python.exe scripts/train_graph_selector.py
 C:\Anaconda\python.exe scripts/evaluate_selector.py
 ```
+
+A2C graph optimization and Top-K export:
+
+```powershell
+C:\Anaconda\python.exe scripts/run_a2c_experiment.py
+C:\Anaconda\python.exe scripts/export_topk_graphs.py
+```

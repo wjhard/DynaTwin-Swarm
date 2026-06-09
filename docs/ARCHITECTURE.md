@@ -82,6 +82,8 @@ The rule selector chooses based on task type, risk, resource conflict count, par
 
 `MLGraphSelector` encodes task profile features and trains a local RandomForest classifier. `ModelArtsLoRAGraphSelectorTrainer` exposes the cloud training contract and uses the ModelArts mock client unless configured otherwise.
 
+`A2CEdgeOptimizer` keeps a separate actor-critic workflow for industrial topology candidates. It updates topology logits with an advantage term, updates a table-based critic per task type, and stores the Top-K candidate graph definitions for downstream selection.
+
 ## Scheduling
 
 The schedule solver uses OR-Tools CP-SAT when available and falls back to deterministic greedy scheduling if CP-SAT import or solve fails. Hard constraints are validated separately so LLM output cannot bypass safety or resource rules.

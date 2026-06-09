@@ -36,3 +36,27 @@ C:\Anaconda\python.exe scripts/evaluate_selector.py
 ```
 
 The local trainer uses scikit-learn RandomForestClassifier and stores `data/selector_model.joblib`. ModelArts LoRA training is represented by an adapter and mock job submission when real ModelArts credentials are absent.
+
+## A2C Top-K Graph Optimization
+
+The original GPTSwarm REINFORCE optimizer remains in `swarm/optimizer/edge_optimizer/optimization.py`. The industrial extension adds `A2CEdgeOptimizer`, `CriticNetwork`, `CandidateGraphStore`, and `A2CExperimentRunner`.
+
+Run:
+
+```powershell
+C:\Anaconda\python.exe scripts/run_a2c_experiment.py
+C:\Anaconda\python.exe scripts/export_topk_graphs.py
+```
+
+Candidate graphs are saved as:
+
+```json
+{
+  "graph_id": "high_risk_review-1",
+  "nodes": [],
+  "edges": [],
+  "score": 0.0,
+  "task_type": "high_risk_composite_incident",
+  "metadata": {}
+}
+```
