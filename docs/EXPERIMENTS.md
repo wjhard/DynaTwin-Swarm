@@ -60,3 +60,13 @@ Candidate graphs are saved as:
   "metadata": {}
 }
 ```
+
+## Comparison Report
+
+`scripts/run_local_demo.py` writes a compact comparison report to:
+
+- `reports/experiments/results.csv`
+- `reports/experiments/summary.json`
+- `reports/experiments/figures/README.md`
+
+Compared systems include Single Agent, Fixed Serial, Fixed Parallel, GPTSwarm REINFORCE, Dynamic without ReflAct, and Proposed.

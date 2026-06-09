@@ -113,3 +113,15 @@ A2C graph optimization and Top-K export:
 C:\Anaconda\python.exe scripts/run_a2c_experiment.py
 C:\Anaconda\python.exe scripts/export_topk_graphs.py
 ```
+
+## Local Demo and Reports
+
+```powershell
+C:\Anaconda\python.exe scripts/run_local_demo.py
+```
+
+This writes experiment summaries under `reports/experiments/`. Docker local mock deployment is available with:
+
+```powershell
+docker compose up --build
+```

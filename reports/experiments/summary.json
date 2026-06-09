@@ -1,0 +1,25 @@
+{
+  "demo_task_id": "task-72912061",
+  "selected_topology": "high_risk_review",
+  "risk_level": "critical",
+  "metrics": {
+    "solver": "ortools_cp_sat",
+    "tardiness_minutes": 0.0,
+    "safety_risk": 0.0,
+    "switch_cost": 7.0,
+    "inventory_waste": 5.0,
+    "agent_call_cost": 11.0,
+    "scheduled_operations": 2.0,
+    "violation_count": 3.0,
+    "reward": -2.1
+  },
+  "systems": [
+    "Single Agent",
+    "Fixed Serial",
+    "Fixed Parallel",
+    "GPTSwarm REINFORCE",
+    "Dynamic without ReflAct",
+    "Proposed"
+  ],
+  "proposed_reward": 0.91
+}

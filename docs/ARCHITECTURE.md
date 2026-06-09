@@ -96,6 +96,10 @@ Huawei-facing classes live under `swarm/integrations/huawei`. Local development 
 
 Adapter status is explicit: missing credentials produce mock/fallback states, not synthetic cloud success.
 
+## Deployment
+
+`docker-compose.yml` defines separate backend and frontend services. The backend defaults to local mock mode and SQLite. The frontend serves the built Vite dashboard through Nginx in Docker or through Vite during development.
+
 ## Persistence
 
 `swarm/persistence` exposes repository contracts for states, schedules, traces, topology selections, events, and experiment summaries. SQLite is the default. GaussDB uses the same contract and is adapter-gated.

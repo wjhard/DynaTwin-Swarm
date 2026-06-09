@@ -1,0 +1,26 @@
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: deployment/Dockerfile.backend
+    environment:
+      APP_ENV: local
+      LLM_PROVIDER: mock
+      DATABASE_PROVIDER: sqlite
+      SQLITE_PATH: /app/data/dynatwin.db
+    ports:
+      - "8000:8000"
+    volumes:
+      - dynatwin-data:/app/data
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: ../deployment/Dockerfile.frontend
+    ports:
+      - "8080:80"
+    depends_on:
+      - backend
+
+volumes:
+  dynatwin-data:

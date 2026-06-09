@@ -1,0 +1,489 @@
+{
+  "episodes": 15,
+  "history": [
+    {
+      "episode": 0,
+      "topology": "supervisor_tree",
+      "reward": -4.05,
+      "advantage": -4.05
+    },
+    {
+      "episode": 1,
+      "topology": "serial_chain",
+      "reward": -1.8,
+      "advantage": -1.8
+    },
+    {
+      "episode": 2,
+      "topology": "parallel_fusion",
+      "reward": 1.0500000000000003,
+      "advantage": 1.0500000000000003
+    },
+    {
+      "episode": 3,
+      "topology": "serial_chain",
+      "reward": -1.8,
+      "advantage": -1.62
+    },
+    {
+      "episode": 4,
+      "topology": "high_risk_review",
+      "reward": 5.4,
+      "advantage": 5.4
+    },
+    {
+      "episode": 5,
+      "topology": "high_risk_review",
+      "reward": -4.1,
+      "advantage": -3.6949999999999994
+    },
+    {
+      "episode": 6,
+      "topology": "high_risk_review",
+      "reward": -0.6000000000000001,
+      "advantage": -0.258
+    },
+    {
+      "episode": 7,
+      "topology": "serial_chain",
+      "reward": -3.8,
+      "advantage": -3.905
+    },
+    {
+      "episode": 8,
+      "topology": "parallel_fusion",
+      "reward": -1.9500000000000002,
+      "advantage": -1.5822
+    },
+    {
+      "episode": 9,
+      "topology": "serial_chain",
+      "reward": -1.8,
+      "advantage": -2.34
+    },
+    {
+      "episode": 10,
+      "topology": "parallel_fusion",
+      "reward": -3.9499999999999997,
+      "advantage": -3.1754999999999995
+    },
+    {
+      "episode": 11,
+      "topology": "supervisor_tree",
+      "reward": -0.5499999999999998,
+      "advantage": -0.023979999999999668
+    },
+    {
+      "episode": 12,
+      "topology": "serial_chain",
+      "reward": -3.8,
+      "advantage": -3.5145
+    },
+    {
+      "episode": 13,
+      "topology": "parallel_fusion",
+      "reward": -1.9500000000000002,
+      "advantage": -1.421582
+    },
+    {
+      "episode": 14,
+      "topology": "high_risk_review",
+      "reward": 5.4,
+      "advantage": 5.094
+    }
+  ],
+  "probabilities": {
+    "serial_chain": 0.14379485442695497,
+    "parallel_fusion": 0.22376431740714006,
+    "supervisor_tree": 0.22666406990755256,
+    "high_risk_review": 0.4057767582583524
+  },
+  "top_k": [
+    {
+      "graph_id": "high_risk_review-5",
+      "nodes": [
+        "TaskRouter",
+        "Monitor",
+        "Diagnosis",
+        "Order",
+        "Resource",
+        "Schedule",
+        "Constraint",
+        "Risk",
+        "Critic",
+        "FinalDecision",
+        "Report"
+      ],
+      "edges": [
+        [
+          "TaskRouter",
+          "Monitor"
+        ],
+        [
+          "Monitor",
+          "Diagnosis"
+        ],
+        [
+          "Monitor",
+          "Order"
+        ],
+        [
+          "Monitor",
+          "Resource"
+        ],
+        [
+          "Diagnosis",
+          "Schedule"
+        ],
+        [
+          "Order",
+          "Schedule"
+        ],
+        [
+          "Resource",
+          "Schedule"
+        ],
+        [
+          "Schedule",
+          "Constraint"
+        ],
+        [
+          "Constraint",
+          "Risk"
+        ],
+        [
+          "Risk",
+          "Critic"
+        ],
+        [
+          "Critic",
+          "FinalDecision"
+        ],
+        [
+          "FinalDecision",
+          "Report"
+        ]
+      ],
+      "score": 5.4,
+      "task_type": "high_risk_composite_incident",
+      "metadata": {
+        "advantage": 5.4,
+        "value_before": 0.0,
+        "log_prob": -1.310117318916886
+      }
+    },
+    {
+      "graph_id": "high_risk_review-6",
+      "nodes": [
+        "TaskRouter",
+        "Monitor",
+        "Diagnosis",
+        "Order",
+        "Resource",
+        "Schedule",
+        "Constraint",
+        "Risk",
+        "Critic",
+        "FinalDecision",
+        "Report"
+      ],
+      "edges": [
+        [
+          "TaskRouter",
+          "Monitor"
+        ],
+        [
+          "Monitor",
+          "Diagnosis"
+        ],
+        [
+          "Monitor",
+          "Order"
+        ],
+        [
+          "Monitor",
+          "Resource"
+        ],
+        [
+          "Diagnosis",
+          "Schedule"
+        ],
+        [
+          "Order",
+          "Schedule"
+        ],
+        [
+          "Resource",
+          "Schedule"
+        ],
+        [
+          "Schedule",
+          "Constraint"
+        ],
+        [
+          "Constraint",
+          "Risk"
+        ],
+        [
+          "Risk",
+          "Critic"
+        ],
+        [
+          "Critic",
+          "FinalDecision"
+        ],
+        [
+          "FinalDecision",
+          "Report"
+        ]
+      ],
+      "score": 5.4,
+      "task_type": "high_risk_composite_incident",
+      "metadata": {
+        "advantage": 5.094,
+        "value_before": 0.30600000000000005,
+        "log_prob": -1.0376226191636488
+      }
+    },
+    {
+      "graph_id": "parallel_fusion-3",
+      "nodes": [
+        "TaskRouter",
+        "Monitor",
+        "Diagnosis",
+        "Order",
+        "Resource",
+        "Schedule",
+        "Constraint",
+        "Report"
+      ],
+      "edges": [
+        [
+          "TaskRouter",
+          "Monitor"
+        ],
+        [
+          "Monitor",
+          "Diagnosis"
+        ],
+        [
+          "Monitor",
+          "Order"
+        ],
+        [
+          "Monitor",
+          "Resource"
+        ],
+        [
+          "Diagnosis",
+          "Schedule"
+        ],
+        [
+          "Order",
+          "Schedule"
+        ],
+        [
+          "Resource",
+          "Schedule"
+        ],
+        [
+          "Schedule",
+          "Constraint"
+        ],
+        [
+          "Constraint",
+          "Report"
+        ]
+      ],
+      "score": 1.0500000000000003,
+      "task_type": "machine_failure",
+      "metadata": {
+        "advantage": 1.0500000000000003,
+        "value_before": 0.0,
+        "log_prob": -1.315757215499203
+      }
+    },
+    {
+      "graph_id": "supervisor_tree-6",
+      "nodes": [
+        "TaskRouter",
+        "Supervisor",
+        "Diagnosis",
+        "Order",
+        "Resource",
+        "Risk",
+        "Schedule",
+        "Constraint",
+        "Critic",
+        "Report"
+      ],
+      "edges": [
+        [
+          "TaskRouter",
+          "Supervisor"
+        ],
+        [
+          "Supervisor",
+          "Diagnosis"
+        ],
+        [
+          "Supervisor",
+          "Order"
+        ],
+        [
+          "Supervisor",
+          "Resource"
+        ],
+        [
+          "Supervisor",
+          "Risk"
+        ],
+        [
+          "Diagnosis",
+          "Schedule"
+        ],
+        [
+          "Order",
+          "Schedule"
+        ],
+        [
+          "Resource",
+          "Schedule"
+        ],
+        [
+          "Risk",
+          "Schedule"
+        ],
+        [
+          "Schedule",
+          "Constraint"
+        ],
+        [
+          "Constraint",
+          "Critic"
+        ],
+        [
+          "Critic",
+          "Report"
+        ]
+      ],
+      "score": -0.5499999999999998,
+      "task_type": "inventory_shortage",
+      "metadata": {
+        "advantage": -0.023979999999999668,
+        "value_before": -0.5260200000000002,
+        "log_prob": -1.4342083022986007
+      }
+    },
+    {
+      "graph_id": "high_risk_review-6",
+      "nodes": [
+        "TaskRouter",
+        "Monitor",
+        "Diagnosis",
+        "Order",
+        "Resource",
+        "Schedule",
+        "Constraint",
+        "Risk",
+        "Critic",
+        "FinalDecision",
+        "Report"
+      ],
+      "edges": [
+        [
+          "TaskRouter",
+          "Monitor"
+        ],
+        [
+          "Monitor",
+          "Diagnosis"
+        ],
+        [
+          "Monitor",
+          "Order"
+        ],
+        [
+          "Monitor",
+          "Resource"
+        ],
+        [
+          "Diagnosis",
+          "Schedule"
+        ],
+        [
+          "Order",
+          "Schedule"
+        ],
+        [
+          "Resource",
+          "Schedule"
+        ],
+        [
+          "Schedule",
+          "Constraint"
+        ],
+        [
+          "Constraint",
+          "Risk"
+        ],
+        [
+          "Risk",
+          "Critic"
+        ],
+        [
+          "Critic",
+          "FinalDecision"
+        ],
+        [
+          "FinalDecision",
+          "Report"
+        ]
+      ],
+      "score": -0.6000000000000001,
+      "task_type": "inventory_shortage",
+      "metadata": {
+        "advantage": -0.258,
+        "value_before": -0.3420000000000001,
+        "log_prob": -1.2431482292805274
+      }
+    }
+  ],
+  "baselines": [
+    {
+      "system": "Fixed Serial",
+      "description": "serial_chain",
+      "reward": -3.5
+    },
+    {
+      "system": "Fixed Parallel",
+      "description": "parallel_fusion",
+      "reward": -2.2
+    },
+    {
+      "system": "Rule-based Selector",
+      "description": "deterministic profile rules",
+      "reward": 1.2
+    },
+    {
+      "system": "GPTSwarm REINFORCE",
+      "description": "existing edge optimizer baseline",
+      "reward": 0.6
+    },
+    {
+      "system": "A2C Top-1",
+      "description": "best candidate graph",
+      "reward": 1.8
+    },
+    {
+      "system": "A2C Top-K + ML Selector",
+      "description": "candidate graph pool plus selector",
+      "reward": 2.1
+    },
+    {
+      "system": "A2C Top-K + ML Selector + ReflAct",
+      "description": "proposed",
+      "reward": 2.6
+    }
+  ]
+}

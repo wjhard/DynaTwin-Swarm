@@ -1,0 +1,16 @@
+FROM python:3.10-slim
+
+WORKDIR /app
+
+COPY README.md pyproject.toml setup.py ./
+COPY swarm ./swarm
+COPY backend ./backend
+COPY scripts ./scripts
+
+RUN pip install --no-cache-dir \
+    fastapi uvicorn pydantic ortools==9.10.4067 scikit-learn joblib python-dotenv httpx \
+    numpy==1.26.4 pandas shortuuid class-registry loguru async-timeout networkx pyvis
+
+EXPOSE 8000
+
+CMD ["uvicorn", "backend.main:app", "--host", "0.0.0.0", "--port", "8000"]

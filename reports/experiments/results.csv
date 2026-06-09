@@ -1,0 +1,7 @@
+system,description,avg_tardiness_minutes,high_priority_on_time_rate,safety_violations,infeasible_plan_ratio,incident_response_minutes,agent_calls,avg_inference_ms,token_cost_estimate,selector_accuracy,topology_distribution,reward
+Single Agent,one industrial agent,48,0.62,2,0.18,12,1,120,0.03,0.45,serial_chain,0.54
+Fixed Serial,fixed serial multi-agent,42,0.68,1,0.14,10,5,190,0.08,0.58,serial_chain,0.68
+Fixed Parallel,fixed parallel multi-agent,38,0.72,1,0.11,9,8,220,0.11,0.62,parallel_fusion,0.71
+GPTSwarm REINFORCE,original graph optimization,35,0.75,1,0.09,8,7,210,0.1,0.67,learned,0.76
+Dynamic without ReflAct,dynamic graph without reflection,33,0.78,1,0.08,7,8,205,0.1,0.74,rule_based,0.79
+Proposed,dynamic graph + ReflAct + constraints + feedback,26,0.86,0,0.03,5,11,240,0.14,1.0,high_risk_review,0.91
