@@ -18,6 +18,11 @@ from swarm.domain.manufacturing.models import (
     Worker,
 )
 from swarm.domain.manufacturing.simulator import FactorySimulator
+from swarm.domain.manufacturing.scheduler import (
+    ConstraintValidator,
+    IndustrialScheduleSolver,
+    RewardCalculator,
+)
 from swarm.domain.manufacturing.store import (
     FactoryStateStore,
     InMemoryFactoryStateStore,
@@ -27,17 +32,20 @@ from swarm.domain.manufacturing.store import (
 __all__ = [
     "AgentDecisionTrace",
     "ConstraintViolation",
+    "ConstraintValidator",
     "ExecutionRecord",
     "FactorySimulator",
     "FactoryState",
     "FactoryStateStore",
     "InMemoryFactoryStateStore",
+    "IndustrialScheduleSolver",
     "Machine",
     "MachineAlert",
     "Material",
     "Operation",
     "Order",
     "ReflActDecision",
+    "RewardCalculator",
     "ScheduleItem",
     "SchedulePlan",
     "SQLiteFactoryStateStore",

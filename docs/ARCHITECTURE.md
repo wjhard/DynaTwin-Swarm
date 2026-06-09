@@ -84,6 +84,8 @@ The rule selector chooses based on task type, risk, resource conflict count, par
 
 The schedule solver uses OR-Tools CP-SAT when available and falls back to deterministic greedy scheduling if CP-SAT import or solve fails. Hard constraints are validated separately so LLM output cannot bypass safety or resource rules.
 
+The solver returns a dictionary with `best_plan`, `alternative_plans`, `violations`, and `metrics`. Resource feasibility is pre-filtered for failed machines, machine capability, material availability, and worker skill availability before CP-SAT builds machine interval variables and NoOverlap constraints.
+
 ## Huawei and Ascend Boundary
 
 Huawei-facing classes live under `swarm/integrations/huawei`. Local development uses mock adapters for PanguLM, MindIE, GaussDB, OBS, IoTDA, EventGrid, FunctionGraph, and ModelArts.

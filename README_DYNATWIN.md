@@ -74,3 +74,7 @@ Milestone 3 adds four topology templates:
 - `high_risk_review`
 
 `RuleBasedGraphSelector` maps normal scheduling to `serial_chain`, resource conflicts to `parallel_fusion`, complex critic-reviewed tasks to `supervisor_tree`, and high-risk machine anomalies to `high_risk_review`.
+
+## Constraint Scheduling
+
+`IndustrialScheduleSolver` uses OR-Tools CP-SAT when available and falls back to deterministic greedy scheduling only if CP-SAT cannot be imported or solve a feasible model. `ConstraintValidator` independently checks machine overlap, failed-machine exclusion, precedence, machine capability, inventory, worker skills, urgent due dates, safety level, and related hard rules. `RewardCalculator` applies the weighted objective from the task book.
