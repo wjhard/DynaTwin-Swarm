@@ -57,3 +57,9 @@ C:\Anaconda\python.exe scripts/simulate_factory.py --scenario normal --output da
 ```
 
 State can be stored in memory for tests or SQLite for the local demo.
+
+## Industrial ReflAct Agents
+
+The industrial agent set includes task routing, monitoring, diagnosis, order analysis, resource analysis, scheduling, constraint validation, risk review, critic review, and reporting. Each agent emits the same `ReflActDecision` schema and records elapsed time plus evidence in `AgentDecisionTrace`.
+
+Supported provider names are `mock`, `pangu`, `mindie`, and `openai_optional`. Without credentials, the non-local providers return explicit mock fallback notes instead of pretending to be connected.

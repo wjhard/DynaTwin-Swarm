@@ -52,6 +52,21 @@ Each industrial agent returns a `ReflActDecision` with:
 
 The system stores auditable evidence and recommendations only.
 
+The concrete agents are:
+
+- `TaskRouterAgent`
+- `MonitorAgent`
+- `DiagnosisAgent`
+- `OrderAgent`
+- `ResourceAgent`
+- `ScheduleAgent`
+- `ConstraintAgent`
+- `RiskAgent`
+- `CriticAgent`
+- `ReportAgent`
+
+`ReflActStep` executes a list of industrial agents and validates every decision. Invalid structured output is converted to a deterministic fallback decision with evidence explaining the validation failure.
+
 ## Dynamic Topology
 
 The initial topology registry contains:
