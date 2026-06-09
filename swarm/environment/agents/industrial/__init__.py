@@ -3,12 +3,14 @@ from swarm.environment.agents.industrial.agents import (
     ConstraintAgent,
     CriticAgent,
     DiagnosisAgent,
+    FinalDecisionAgent,
     MonitorAgent,
     OrderAgent,
     ReportAgent,
     ResourceAgent,
     RiskAgent,
     ScheduleAgent,
+    SupervisorAgent,
     TaskRouterAgent,
 )
 from swarm.environment.agents.industrial.reflact import ReflActStep
@@ -18,6 +20,7 @@ __all__ = [
     "ConstraintAgent",
     "CriticAgent",
     "DiagnosisAgent",
+    "FinalDecisionAgent",
     "MonitorAgent",
     "OrderAgent",
     "ReflActStep",
@@ -25,5 +28,6 @@ __all__ = [
     "ResourceAgent",
     "RiskAgent",
     "ScheduleAgent",
+    "SupervisorAgent",
     "TaskRouterAgent",
 ]

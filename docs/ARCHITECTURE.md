@@ -78,6 +78,8 @@ The initial topology registry contains:
 
 The rule selector chooses based on task type, risk, resource conflict count, parallel-analysis needs, and critic-review needs. The ML selector learns the same mapping from generated scheduling runs and falls back to rules when no trained model is available.
 
+`IndustrialTopologyExecutor` is the adapter between topology templates and industrial ReflAct agents. It executes topology nodes in topological order and records one `AgentDecisionTrace` per node. This keeps the industrial graph layer separate from the original GPTSwarm graph implementation while preserving the graph-as-control-flow model.
+
 ## Scheduling
 
 The schedule solver uses OR-Tools CP-SAT when available and falls back to deterministic greedy scheduling if CP-SAT import or solve fails. Hard constraints are validated separately so LLM output cannot bypass safety or resource rules.

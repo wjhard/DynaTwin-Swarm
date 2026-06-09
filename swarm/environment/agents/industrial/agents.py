@@ -106,6 +106,14 @@ class TaskRouterAgent(BaseIndustrialAgent):
         return "Route to serial scheduling topology."
 
 
+class SupervisorAgent(BaseIndustrialAgent):
+    agent_name = "SupervisorAgent"
+    goal = "Coordinate specialist agents for complex composite incidents."
+
+    def recommend(self, state: FactoryState, profile: TaskProfile, context: Dict[str, Any]) -> str:
+        return "Fan out diagnosis, order, resource, and risk analysis, then consolidate before scheduling."
+
+
 class MonitorAgent(BaseIndustrialAgent):
     agent_name = "MonitorAgent"
     goal = "Monitor equipment, orders, inventory, and worker availability."
@@ -198,10 +206,19 @@ class ReportAgent(BaseIndustrialAgent):
         return "Report selected topology, ReflAct trace, best plan, alternatives, risks, and Huawei adapter status."
 
 
+class FinalDecisionAgent(BaseIndustrialAgent):
+    agent_name = "FinalDecisionAgent"
+    goal = "Approve the safest feasible decision after risk and critic review."
+
+    def recommend(self, state: FactoryState, profile: TaskProfile, context: Dict[str, Any]) -> str:
+        return "Approve only schedules that pass hard-constraint validation and include alternatives."
+
+
 AGENT_CLASSES: Dict[str, Type[BaseIndustrialAgent]] = {
     cls.agent_name: cls
     for cls in [
         TaskRouterAgent,
+        SupervisorAgent,
         MonitorAgent,
         DiagnosisAgent,
         OrderAgent,
@@ -210,6 +227,7 @@ AGENT_CLASSES: Dict[str, Type[BaseIndustrialAgent]] = {
         ConstraintAgent,
         RiskAgent,
         CriticAgent,
+        FinalDecisionAgent,
         ReportAgent,
     ]
 }
