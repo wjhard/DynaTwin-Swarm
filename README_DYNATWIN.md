@@ -96,3 +96,13 @@ npm run dev
 ## Huawei Cloud and Ascend
 
 Huawei integrations are adapter-backed. PanguLM, MindIE, GaussDB, OBS, IoTDA, EventGrid, FunctionGraph, and ModelArts all have local mock/fallback implementations. See `docs/HUAWEI_INTEGRATION.md` and `docs/DEPLOYMENT_ASCEND.md`.
+
+## Trainable Graph Selector
+
+Generate, train, and evaluate a local graph selector with:
+
+```powershell
+C:\Anaconda\python.exe scripts/generate_selector_dataset.py
+C:\Anaconda\python.exe scripts/train_graph_selector.py
+C:\Anaconda\python.exe scripts/evaluate_selector.py
+```
