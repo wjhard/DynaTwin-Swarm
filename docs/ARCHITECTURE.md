@@ -98,6 +98,8 @@ Huawei-facing classes live under `swarm/integrations/huawei`. Local development 
 
 FastAPI exposes task, event, state, schedule, trace, topology, event, experiment, and WebSocket dashboard endpoints. The React dashboard renders machines, orders, materials, topology, ReflAct traces, Gantt rows, risk, alternatives, history, and Huawei adapter status.
 
+`backend.service.DynaTwinService` owns the local orchestration path. `backend.main.create_app` accepts a repository for tests and defaults to `SQLiteRepository` for local runtime.
+
 ## Milestone Execution Notes
 
 The local repository was initialized because the downloaded source tree had no `.git` directory. External cloud connection status must remain `mock` or fallback unless real credentials are supplied and verified.

@@ -78,3 +78,7 @@ Milestone 3 adds four topology templates:
 ## Constraint Scheduling
 
 `IndustrialScheduleSolver` uses OR-Tools CP-SAT when available and falls back to deterministic greedy scheduling only if CP-SAT cannot be imported or solve a feasible model. `ConstraintValidator` independently checks machine overlap, failed-machine exclusion, precedence, machine capability, inventory, worker skills, urgent due dates, safety level, and related hard rules. `RewardCalculator` applies the weighted objective from the task book.
+
+## Backend
+
+The FastAPI backend exposes health, task execution, machine/order event injection, latest state/schedule/trace/topology/event/experiment reads, and a dashboard WebSocket. SQLite is the local default repository, with a GaussDB-compatible repository contract reserved for cloud adapter mode.

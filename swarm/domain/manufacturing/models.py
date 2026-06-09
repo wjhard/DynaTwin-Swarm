@@ -118,7 +118,7 @@ class SchedulePlan(DynaTwinModel):
     items: List[ScheduleItem] = Field(default_factory=list)
     alternative_plans: List[Dict[str, Any]] = Field(default_factory=list)
     violations: List[ConstraintViolation] = Field(default_factory=list)
-    metrics: Dict[str, float] = Field(default_factory=dict)
+    metrics: Dict[str, Any] = Field(default_factory=dict)
     objective: str = "minimize tardiness under safety and resource constraints"
 
 
@@ -175,7 +175,7 @@ class ExecutionRecord(DynaTwinModel):
     best_plan: Optional[SchedulePlan] = None
     alternative_plans: List[SchedulePlan] = Field(default_factory=list)
     risk_summary: Dict[str, Any] = Field(default_factory=dict)
-    metrics: Dict[str, float] = Field(default_factory=dict)
+    metrics: Dict[str, Any] = Field(default_factory=dict)
     events: List[Dict[str, Any]] = Field(default_factory=list)
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
