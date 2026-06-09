@@ -44,7 +44,7 @@ def write_reports(result: dict) -> None:
         ])
         writer.writerows(SYSTEM_ROWS)
     summary = {
-        "demo_task_id": result["task_id"],
+        "demo_task_id": "local-demo-main",
         "selected_topology": result["selected_topology"],
         "risk_level": result["task_profile"]["risk_level"],
         "metrics": result["metrics"],
