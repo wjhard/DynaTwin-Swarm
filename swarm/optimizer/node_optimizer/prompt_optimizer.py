@@ -4,7 +4,12 @@
 import json
 import os
 from typing import Any, Dict, List, Tuple, Union
-from sentence_transformers import SentenceTransformer, util
+
+try:
+    from sentence_transformers import SentenceTransformer, util
+except ImportError:  # Optional dependency used only when node prompt optimization is enabled.
+    SentenceTransformer = None
+    util = None
 
 from swarm.llm.format import Message
 from swarm.llm import LLMRegistry
@@ -31,6 +36,11 @@ class MetaPromptOptimizer:
         self.domain = domain
         self.model_name = model_name
         self.operation = operation
+        if SentenceTransformer is None:
+            raise ImportError(
+                "sentence_transformers is required for MetaPromptOptimizer. "
+                "Install sentence-transformers or run without node prompt optimization."
+            )
         self.embedding_model = SentenceTransformer('all-MiniLM-L6-v2')
         self.llm = LLMRegistry.get(model_name)
         self.memory = GlobalMemory.instance()
@@ -234,4 +244,3 @@ class MetaPromptOptimizer:
         except (IOError, json.JSONDecodeError):
             logger.error("Failed to read or decode existing data. Creating new file.")
             return []
-

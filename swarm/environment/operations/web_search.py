@@ -43,6 +43,7 @@ class WebSearch(Node):
             return GoogleSearchEngine()
         if os.getenv("BOCHA_API_KEY"):
             return BoChaSearchEngine()
+        return None
 
     async def _execute(self, inputs: List[Any] = [], max_keywords: int = 5, **kwargs):
 
@@ -88,6 +89,7 @@ class WebSearch(Node):
         return outputs
 
     def web_search(self, query):
+        if self.searcher is None:
+            return f"Local mock search result for '{query}': no search API key is configured."
         return self.searcher.search(query)
     
-
