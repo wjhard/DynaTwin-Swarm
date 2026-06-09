@@ -90,6 +90,8 @@ The solver returns a dictionary with `best_plan`, `alternative_plans`, `violatio
 
 Huawei-facing classes live under `swarm/integrations/huawei`. Local development uses mock adapters for PanguLM, MindIE, GaussDB, OBS, IoTDA, EventGrid, FunctionGraph, and ModelArts.
 
+Adapter status is explicit: missing credentials produce mock/fallback states, not synthetic cloud success.
+
 ## Persistence
 
 `swarm/persistence` exposes repository contracts for states, schedules, traces, topology selections, events, and experiment summaries. SQLite is the default. GaussDB uses the same contract and is adapter-gated.

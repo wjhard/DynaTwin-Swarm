@@ -92,3 +92,7 @@ cd frontend
 npm install
 npm run dev
 ```
+
+## Huawei Cloud and Ascend
+
+Huawei integrations are adapter-backed. PanguLM, MindIE, GaussDB, OBS, IoTDA, EventGrid, FunctionGraph, and ModelArts all have local mock/fallback implementations. See `docs/HUAWEI_INTEGRATION.md` and `docs/DEPLOYMENT_ASCEND.md`.
