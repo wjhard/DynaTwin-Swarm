@@ -9,7 +9,11 @@ def optimize(swarm, evaluator, num_iter=100, lr=1e-1, display_freq=10, batch_siz
     optimizer = torch.optim.Adam(swarm.connection_dist.parameters(), lr=lr)
     pbar = tqdm(range(num_iter))
     utilities = []
-    loop = asyncio.get_event_loop()
+    try:
+        loop = asyncio.get_event_loop()
+    except RuntimeError:
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
     for step in pbar:
         evaluator.reset()
         optimizer.zero_grad()

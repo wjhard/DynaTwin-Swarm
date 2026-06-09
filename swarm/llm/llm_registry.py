@@ -1,3 +1,4 @@
+import os
 from typing import Optional
 from class_registry import ClassRegistry
 
@@ -22,6 +23,8 @@ class LLMRegistry:
 
         if model_name == 'mock':
             model = cls.registry.get(model_name)
+        elif model_name.startswith("gpt") and not os.getenv("OPENAI_API_KEY"):
+            model = cls.registry.get('mock')
         else: # any version of GPTChat like "gpt-4-1106-preview"
             model = cls.registry.get('GPTChat', model_name)
 

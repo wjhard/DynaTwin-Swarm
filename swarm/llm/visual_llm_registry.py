@@ -1,3 +1,4 @@
+import os
 from typing import Optional
 from class_registry import ClassRegistry
 
@@ -22,6 +23,8 @@ class VisualLLMRegistry:
 
         if model_name == 'mock':
             model = cls.registry.get(model_name)
+        elif model_name.startswith("gpt") and not os.getenv("OPENAI_API_KEY"):
+            model = cls.registry.get('mock')
         else: # any version of GPT4VChat like "gpt-4-vision-preview"
             model = cls.registry.get('GPT4VChat', model_name)
 
