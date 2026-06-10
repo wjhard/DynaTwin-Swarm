@@ -27,6 +27,28 @@ Response includes:
 - `risk_summary`
 - `metrics`
 
+## Public Datasets
+
+`GET /api/datasets/public`
+
+Returns public benchmark datasets currently available to the dashboard. The first integrated dataset is `jsplib_ft06`, a classic public 6-machine, 6-job Job Shop Scheduling benchmark distributed through JSPLib / OR-Library collections.
+
+`POST /api/datasets/public/{dataset_id}/run`
+
+Runs a public benchmark through the same DynaTwin-Swarm pipeline:
+
+```text
+dataset -> FactoryState -> Graph Selector -> ReflAct agents -> scheduler -> dashboard
+```
+
+Example:
+
+```text
+POST /api/datasets/public/jsplib_ft06/run
+```
+
+The response shape matches `POST /api/tasks/run`.
+
 ## Events
 
 `POST /api/events/machine-alert`

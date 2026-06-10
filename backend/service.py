@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import Any, Dict
 
+from swarm.datasets import list_public_jobshop_datasets, public_jobshop_state
 from swarm.domain.manufacturing import ExecutionRecord, FactorySimulator, IndustrialScheduleSolver
 from swarm.persistence import Repository
 from swarm.selector import IndustrialTopologyExecutor, RuleBasedGraphSelector
@@ -15,6 +16,16 @@ class DynaTwinService:
 
     def run_task(self, scenario: str = "main") -> Dict[str, Any]:
         state = self.simulator.scenario(scenario)
+        return self.run_state(state)
+
+    def run_public_dataset(self, dataset_id: str) -> Dict[str, Any]:
+        state = public_jobshop_state(dataset_id)
+        return self.run_state(state)
+
+    def public_datasets(self) -> Dict[str, Any]:
+        return {"datasets": list_public_jobshop_datasets()}
+
+    def run_state(self, state) -> Dict[str, Any]:
         profile = self.simulator.profile_task(state)
         selection = RuleBasedGraphSelector().select(profile)
         traces = IndustrialTopologyExecutor(provider=self.provider).execute(state, profile, selection)

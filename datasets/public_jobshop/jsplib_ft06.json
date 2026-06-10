@@ -1,0 +1,79 @@
+{
+  "id": "jsplib_ft06",
+  "name": "JSPLib FT06",
+  "family": "Job Shop Scheduling Benchmark",
+  "source": "Fisher-Thompson 6x6 public job-shop instance, distributed through JSPLib / OR-Library benchmark collections",
+  "source_url": "https://people.brunel.ac.uk/~mastjjb/jeb/orlib/jobshopinfo.html",
+  "best_known_makespan": 55,
+  "machine_count": 6,
+  "job_count": 6,
+  "description": "Classic 6-machine, 6-job job-shop scheduling benchmark used to validate scheduling algorithms.",
+  "jobs": [
+    {
+      "id": "J1",
+      "operations": [
+        {"machine": 1, "duration": 3},
+        {"machine": 2, "duration": 6},
+        {"machine": 3, "duration": 1},
+        {"machine": 4, "duration": 7},
+        {"machine": 6, "duration": 3},
+        {"machine": 5, "duration": 6}
+      ]
+    },
+    {
+      "id": "J2",
+      "operations": [
+        {"machine": 2, "duration": 8},
+        {"machine": 3, "duration": 5},
+        {"machine": 5, "duration": 10},
+        {"machine": 6, "duration": 10},
+        {"machine": 1, "duration": 10},
+        {"machine": 4, "duration": 4}
+      ]
+    },
+    {
+      "id": "J3",
+      "operations": [
+        {"machine": 3, "duration": 5},
+        {"machine": 4, "duration": 4},
+        {"machine": 6, "duration": 8},
+        {"machine": 1, "duration": 9},
+        {"machine": 2, "duration": 1},
+        {"machine": 5, "duration": 7}
+      ]
+    },
+    {
+      "id": "J4",
+      "operations": [
+        {"machine": 2, "duration": 5},
+        {"machine": 1, "duration": 5},
+        {"machine": 3, "duration": 5},
+        {"machine": 4, "duration": 3},
+        {"machine": 5, "duration": 8},
+        {"machine": 6, "duration": 9}
+      ]
+    },
+    {
+      "id": "J5",
+      "operations": [
+        {"machine": 3, "duration": 9},
+        {"machine": 2, "duration": 3},
+        {"machine": 5, "duration": 5},
+        {"machine": 6, "duration": 4},
+        {"machine": 1, "duration": 3},
+        {"machine": 4, "duration": 1}
+      ]
+    },
+    {
+      "id": "J6",
+      "operations": [
+        {"machine": 2, "duration": 3},
+        {"machine": 4, "duration": 3},
+        {"machine": 6, "duration": 9},
+        {"machine": 1, "duration": 10},
+        {"machine": 5, "duration": 4},
+        {"machine": 3, "duration": 1}
+      ]
+    }
+  ]
+}

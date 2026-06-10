@@ -39,6 +39,14 @@ def create_app(repository=None) -> FastAPI:
     def run_task(request: RunTaskRequest) -> Dict[str, Any]:
         return app.state.service.run_task(request.scenario)
 
+    @app.get("/api/datasets/public")
+    def public_datasets() -> Dict[str, Any]:
+        return app.state.service.public_datasets()
+
+    @app.post("/api/datasets/public/{dataset_id}/run")
+    def run_public_dataset(dataset_id: str) -> Dict[str, Any]:
+        return app.state.service.run_public_dataset(dataset_id)
+
     @app.post("/api/events/machine-alert")
     def machine_alert(payload: Dict[str, Any]) -> Dict[str, Any]:
         return app.state.service.machine_alert(payload.get("machine_id", "M3"))
