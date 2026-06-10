@@ -30,6 +30,7 @@ def test_api_event_and_latest_endpoints(tmp_path):
 
     assert client.get("/api/state").json()["machines"]
     assert client.get("/api/events/latest").json()["events"]
+    assert client.get("/api/integrations/status").json()["status"]["PanguLM"] == "mock"
 
     reset = client.post("/api/demo/reset")
     assert reset.status_code == 200

@@ -28,6 +28,7 @@ type Material = { id: string; name: string; quantity: number; reserved: number; 
 type Alert = { id: string; machine_id: string; alert_type: string; severity: string; message: string; minute: number; requires_stop: boolean };
 type Trace = { agent_name: string; decision: { risk_level: string; recommended_action: string; evidence: string[]; confidence: number; gap: string } };
 type ScheduleItem = { order_id: string; operation_id: string; machine_id: string; start_minute: number; end_minute: number; status: string };
+type IntegrationStatus = Record<string, string>;
 type FactoryState = {
   now_minute: number;
   machines: Machine[];
@@ -51,6 +52,17 @@ type RunResult = {
 };
 
 const API_BASE = (import.meta.env.VITE_API_BASE || "http://127.0.0.1:8010").replace(/\/$/, "");
+
+const fallbackIntegrationStatus: IntegrationStatus = {
+  PanguLM: "mock",
+  MindIE: "mock",
+  GaussDB: "sqlite fallback",
+  OBS: "local fallback",
+  IoTDA: "local event bus",
+  EventGrid: "local router",
+  FunctionGraph: "local trigger",
+  ModelArts: "local training"
+};
 
 const fallbackMachines: Machine[] = [
   { id: "M1", name: "Cutter 1", machine_type: "cutting", status: "busy", efficiency: 1, temperature_c: 25 },
@@ -118,6 +130,7 @@ async function getJson(path: string) {
 function App() {
   const [result, setResult] = useState<RunResult | null>(null);
   const [factoryState, setFactoryState] = useState<FactoryState | null>(null);
+  const [integrationStatus, setIntegrationStatus] = useState<IntegrationStatus>(fallbackIntegrationStatus);
   const [events, setEvents] = useState<Record<string, unknown>[]>([]);
   const [runLog, setRunLog] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
@@ -130,6 +143,7 @@ function App() {
   const alertCount = factoryState?.alerts?.length ?? 0;
   const operationCount = orders.reduce((count, order) => count + order.operations.length, 0);
   const latestScenario = String(factoryState?.metadata?.scenario ?? "not loaded");
+  const statusItems = [`API: ${API_BASE}`, ...Object.entries(integrationStatus).map(([name, status]) => `${name}: ${status}`)];
   const topology = result?.selected_topology ?? "high_risk_review";
   const flow = useMemo(() => buildFlow(topology), [topology]);
   const chartData = result?.best_plan.items.map((item) => ({
@@ -155,9 +169,16 @@ function App() {
   }
 
   async function refreshState() {
-    const [statePayload, eventsPayload] = await Promise.all([getJson("/api/state"), getJson("/api/events/latest")]);
+    const [statePayload, eventsPayload, statusPayload] = await Promise.all([
+      getJson("/api/state"),
+      getJson("/api/events/latest"),
+      getJson("/api/integrations/status"),
+    ]);
     if (Array.isArray(statePayload?.machines)) {
       setFactoryState(statePayload as FactoryState);
+    }
+    if (statusPayload?.status) {
+      setIntegrationStatus(statusPayload.status as IntegrationStatus);
     }
     if (Array.isArray(eventsPayload?.events)) {
       setEvents(eventsPayload.events);
@@ -246,7 +267,7 @@ function App() {
           <p>Industrial digital twin scheduling dashboard</p>
         </div>
         <div className="status-strip">
-          {[`API: ${API_BASE}`, "PanguLM: mock", "MindIE: mock", "GaussDB: sqlite fallback", "OBS: local fallback", "IoTDA: local event bus", "EventGrid: local router", "FunctionGraph: local trigger", "ModelArts: local training"].map((item) => (
+          {statusItems.map((item) => (
             <span key={item}>{item}</span>
           ))}
         </div>
@@ -327,6 +348,7 @@ function App() {
               <div className="trace" key={trace.agent_name}>
                 <div><strong>{trace.agent_name}</strong><span>{trace.decision.risk_level} - {Math.round(trace.decision.confidence * 100)}%</span></div>
                 <p>{trace.decision.recommended_action}</p>
+                {trace.decision.evidence?.[0] && <small className="provider-note">{trace.decision.evidence[0]}</small>}
               </div>
             ))}
           </div>

@@ -8,6 +8,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 from backend.service import DynaTwinService
+from swarm.integrations.huawei import HuaweiIntegrationConfig
+from swarm.llm.industrial_provider import provider_runtime_status
 from swarm.persistence import SQLiteRepository
 
 
@@ -72,6 +74,14 @@ def create_app(repository=None) -> FastAPI:
     @app.get("/api/events/latest")
     def events_latest() -> Dict[str, Any]:
         return {"events": app.state.repository.latest_events()}
+
+    @app.get("/api/integrations/status")
+    def integrations_status() -> Dict[str, Any]:
+        status = HuaweiIntegrationConfig.from_env().status()
+        for name, runtime_state in provider_runtime_status().items():
+            if runtime_state:
+                status[name] = runtime_state
+        return {"status": status}
 
     @app.get("/api/experiments/latest")
     def experiments_latest() -> Dict[str, Any]:

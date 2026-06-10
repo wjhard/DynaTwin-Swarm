@@ -45,8 +45,8 @@ class HuaweiIntegrationConfig:
 
     def status(self) -> Dict[str, str]:
         return {
-            "PanguLM": "connected" if self.pangu_base_url and self.pangu_api_key else "mock",
-            "MindIE": "connected" if self.mindie_base_url else "mock",
+            "PanguLM": "configured" if self.pangu_base_url and self.pangu_api_key else "mock",
+            "MindIE": "configured" if self.mindie_base_url else "mock",
             "GaussDB": "connected" if self.gaussdb_dsn and self.database_provider == "gaussdb" else "sqlite fallback",
             "OBS": "connected" if self.obs_bucket and self.object_storage_provider == "obs" else "local fallback",
             "IoTDA": "connected" if self.iotda_endpoint and self.event_provider == "iotda" else "local event bus",

@@ -22,3 +22,12 @@ def test_huawei_config_defaults_to_local_mock(monkeypatch):
     assert status["MindIE"] == "mock"
     assert status["GaussDB"] == "sqlite fallback"
     assert status["ModelArts"] == "local training"
+
+
+def test_huawei_config_marks_pangu_as_configured(monkeypatch):
+    monkeypatch.setenv("PANGU_BASE_URL", "https://example.com/pangu")
+    monkeypatch.setenv("PANGU_API_KEY", "test-key")
+
+    status = HuaweiIntegrationConfig.from_env().status()
+
+    assert status["PanguLM"] == "configured"
