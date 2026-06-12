@@ -165,6 +165,7 @@ class TopologySelection(DynaTwinModel):
     confidence: float = Field(default=1.0, ge=0.0, le=1.0)
     candidates: List[str] = Field(default_factory=list)
     reason: str = ""
+    metadata: Dict[str, Any] = Field(default_factory=dict)
 
 
 class ExecutionRecord(DynaTwinModel):

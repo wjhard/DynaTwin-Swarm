@@ -55,7 +55,11 @@ class BaseIndustrialAgent:
     def describe_state(self, state: FactoryState) -> str:
         failed = [machine.id for machine in state.machines if machine.status == "failed"]
         urgent = [order.id for order in state.orders if order.priority == "urgent"]
-        return f"{len(state.machines)} machines, failed={failed}, urgent_orders={urgent}, alerts={len(state.alerts)}"
+        operation_count = sum(len(order.operations) for order in state.orders)
+        summary = f"{len(state.machines)} machines, failed={failed}, urgent_orders={urgent}, alerts={len(state.alerts)}"
+        if len(state.machines) > 10 or operation_count > 100:
+            summary += f", large-scale: {len(state.machines)} machines, {operation_count} operations"
+        return summary
 
     def describe_gap(self, state: FactoryState, profile: TaskProfile) -> str:
         if profile.risk_level in {"high", "critical"}:
@@ -99,6 +103,8 @@ class TaskRouterAgent(BaseIndustrialAgent):
     goal = "Classify the industrial task and route it to the right topology."
 
     def recommend(self, state: FactoryState, profile: TaskProfile, context: Dict[str, Any]) -> str:
+        if profile.task_type == "large_scale_benchmark_scheduling":
+            return "Route to parallel analysis topology for large-scale benchmark scheduling"
         if profile.risk_level == "critical":
             return "Route to high_risk_review topology."
         if profile.requires_parallel_analysis:
@@ -169,6 +175,9 @@ class ScheduleAgent(BaseIndustrialAgent):
     goal = "Prepare inputs for the industrial scheduling solver."
 
     def recommend(self, state: FactoryState, profile: TaskProfile, context: Dict[str, Any]) -> str:
+        operation_count = sum(len(order.operations) for order in state.orders)
+        if operation_count > 100:
+            return f"Invoke CP-SAT solver with parallelization and beam-search heuristic for large-scale instance ({operation_count} operations)"
         return "Invoke CP-SAT solver with safety, inventory, due-date, and skill constraints."
 
 

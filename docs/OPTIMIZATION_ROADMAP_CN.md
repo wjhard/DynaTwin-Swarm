@@ -9,12 +9,16 @@
 
 ## 1. 公开数据集接入
 
-已新增 JSPLib FT06 公开 Job Shop Scheduling benchmark。
+已新增 JSPLib FT06、Lawrence LA40、Adams-Balas-Zawack ABZ9、Storer-Wu-Vaccari SWV20、Demirkol-Mehta-Uzsoy DMU80 等公开 Job Shop Scheduling benchmark。
 
 数据文件：
 
 ```text
 datasets/public_jobshop/jsplib_ft06.json
+datasets/public_jobshop/la40.json
+datasets/public_jobshop/abz9.json
+datasets/public_jobshop/swv20.json
+datasets/public_jobshop/dmu80.json
 ```
 
 适配代码：
@@ -28,32 +32,36 @@ swarm/datasets/public_jobshop.py
 ```text
 GET  /api/datasets/public
 POST /api/datasets/public/jsplib_ft06/run
+POST /api/datasets/public/abz9/run
+POST /api/datasets/public/dmu80/run
 ```
 
-FT06 数据规模：
+当前公开数据规模：
 
 | 指标 | 数值 |
 | --- | --- |
-| 作业数 | 6 |
-| 机器数 | 6 |
-| 工序数 | 36 |
-| 公开最优参考 makespan | 55 |
+| FT06 | 6 台机器 / 6 个作业 / 36 道工序 |
+| LA40 | 15 台机器 / 15 个作业 / 225 道工序 |
+| ABZ9 | 15 台机器 / 20 个作业 / 300 道工序 |
+| SWV20 | 10 台机器 / 50 个作业 / 500 道工序 |
+| DMU80 | 20 台机器 / 50 个作业 / 1000 道工序 |
 
 运行链路：
 
 ```text
-JSPLib FT06
+公开 Job Shop benchmark
   -> FactoryState
+  -> 大规模任务画像
   -> Graph Selector
   -> ReflAct Agents
   -> CP-SAT / Greedy Scheduler
   -> Dashboard
 ```
 
-前端现在可以在“公开数据集中心”点击运行该数据集。运行后，决策摘要会显示：
+前端现在可以在“公开数据集中心”点击运行任一公开数据集。运行后，决策摘要会显示：
 
 ```text
-当前正在使用公开基准数据集 JSPLib FT06，包含 6 个作业、6 台机器、36 道工序。
+当前正在使用公开基准数据集 AdamsBalasZawack ABZ9，包含 20 个作业、15 台机器、300 道工序。
 ```
 
 ## 2. 前端中文化和界面重构
@@ -78,14 +86,14 @@ JSPLib FT06
 | --- | --- |
 | 左侧导航 | 快速跳转到总览、数据集、智能体、排程和事件 |
 | 顶部状态栏 | 展示 API、PanguLM、MindIE、GaussDB、OBS 等状态 |
-| 工具栏 | 触发正常排产、M3 过热、紧急订单、组合异常、FT06 数据集和重置 |
+| 工具栏 | 触发正常排产、M3 过热、紧急订单、组合异常、FT06、大型公开数据集和重置 |
 | 当前决策摘要 | 用一句话说明当前系统判断 |
 | 指标卡片 | 展示运行状态、风险、拓扑和已排工序 |
 | 设备状态 | 展示设备状态、温度、工单和能力 |
 | 订单队列 | 展示订单优先级、截止时间和工序数量 |
 | 物料库存 | 展示当前可用库存 |
 | 调度对比 | 对比上次和当前 makespan，并显示公开最优参考 |
-| 公开数据集中心 | 展示并运行 JSPLib FT06 |
+| 公开数据集中心 | 展示并运行 FT06、LA40、ABZ9、SWV20、DMU80 |
 | 动态智能体拓扑 | 展示本次选择的 Agent 协作图 |
 | ReflAct 智能体决策链 | 展示 Agent 决策和 provider evidence |
 | 生产排程甘特图 | 展示每道工序的机器和时间安排 |
@@ -97,7 +105,7 @@ JSPLib FT06
 
 下一阶段建议继续做：
 
-1. 接入更多公开数据集，例如 Taillard Job Shop、NASA C-MAPSS、UCI SECOM。
+1. 继续接入更多公开数据集，例如 Taillard Job Shop、NASA C-MAPSS、UCI SECOM。
 2. 增加实验评估页，对比 CP-SAT、Greedy、A2C 和不同 Graph Selector。
 3. 增加设备健康预测模块，用公开退化数据支撑设备风险。
 4. 增加质量风险预测模块，用 SECOM 类数据支撑良率分析。
@@ -111,7 +119,7 @@ JSPLib FT06
 可以这样讲：
 
 ```text
-系统当前不只依赖本地模拟场景，还接入了 JSPLib FT06 公开 Job Shop Scheduling benchmark。
-公开数据集会被转换成数字孪生工厂状态，再经过动态 Agent 拓扑选择、ReflAct 决策链和调度求解器，最终在中文工业看板中展示排程结果。
+系统当前不只依赖本地模拟场景，还接入了 FT06、LA40、ABZ9、SWV20、DMU80 等公开 Job Shop Scheduling benchmark，最大可以直接运行 20 台机器、50 个作业、1000 道工序的 DMU80 压力实例。
+公开数据集会被转换成数字孪生工厂状态，再经过大规模任务画像、动态 Agent 拓扑选择、ReflAct 决策链和调度求解器，最终在中文工业看板中展示排程结果。
 这说明系统具备从公开 benchmark 到工业调度决策的完整闭环。
 ```

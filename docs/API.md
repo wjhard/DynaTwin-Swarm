@@ -33,6 +33,19 @@ Response includes:
 
 Returns public benchmark datasets currently available to the dashboard. The first integrated dataset is `jsplib_ft06`, a classic public 6-machine, 6-job Job Shop Scheduling benchmark distributed through JSPLib / OR-Library collections.
 
+The dashboard also includes larger public benchmark instances downloaded from the ScheduleOpt public Job Shop benchmark mirror:
+
+- `la40`: Lawrence 15-machine, 15-job instance, 225 operations.
+- `abz9`: Adams-Balas-Zawack 15-machine, 20-job instance, 300 operations.
+- `swv20`: Storer-Wu-Vaccari 10-machine, 50-job instance, 500 operations.
+- `dmu80`: Demirkol-Mehta-Uzsoy 20-machine, 50-job instance, 1000 operations.
+
+Large instances are converted into the same industrial `FactoryState` model as the local digital-twin scenarios, so the pipeline remains:
+
+```text
+public benchmark -> FactoryState -> large-scale task profile -> Graph Selector -> ReflAct agents -> CP-SAT scheduler -> dashboard
+```
+
 `POST /api/datasets/public/{dataset_id}/run`
 
 Runs a public benchmark through the same DynaTwin-Swarm pipeline:
@@ -45,6 +58,8 @@ Example:
 
 ```text
 POST /api/datasets/public/jsplib_ft06/run
+POST /api/datasets/public/abz9/run
+POST /api/datasets/public/dmu80/run
 ```
 
 The response shape matches `POST /api/tasks/run`.

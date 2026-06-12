@@ -19,6 +19,21 @@ def test_public_jobshop_dataset_loads_ft06():
     assert state.metadata["dataset_id"] == "jsplib_ft06"
 
 
+def test_public_jobshop_dataset_loads_large_instances():
+    datasets = {dataset["id"]: dataset for dataset in list_public_jobshop_datasets()}
+
+    assert datasets["la40"]["operation_count"] == 225
+    assert datasets["abz9"]["operation_count"] == 300
+    assert datasets["swv20"]["operation_count"] == 500
+    assert datasets["dmu80"]["operation_count"] == 1000
+
+    state = public_jobshop_state("dmu80")
+    assert len(state.machines) == 20
+    assert len(state.orders) == 50
+    assert sum(len(order.operations) for order in state.orders) == 1000
+    assert state.metadata["dataset_id"] == "dmu80"
+
+
 def test_public_dataset_api_runs_scheduler(tmp_path):
     app = create_app(SQLiteRepository(str(tmp_path / "datasets.db")))
     client = app.test_client() if hasattr(app, "test_client") else None
@@ -29,7 +44,8 @@ def test_public_dataset_api_runs_scheduler(tmp_path):
 
     datasets = client.get("/api/datasets/public")
     assert datasets.status_code == 200
-    assert datasets.json()["datasets"][0]["id"] == "jsplib_ft06"
+    dataset_ids = {dataset["id"] for dataset in datasets.json()["datasets"]}
+    assert {"jsplib_ft06", "la40", "abz9", "swv20", "dmu80"}.issubset(dataset_ids)
 
     result = client.post("/api/datasets/public/jsplib_ft06/run")
     payload = result.json()
@@ -38,3 +54,21 @@ def test_public_dataset_api_runs_scheduler(tmp_path):
     assert payload["task_profile"]["risk_level"] == "low"
     assert payload["best_plan"]["items"]
     assert payload["metrics"]["scheduled_operations"] == 36
+
+
+def test_large_public_dataset_api_uses_parallel_topology(tmp_path):
+    app = create_app(SQLiteRepository(str(tmp_path / "large_datasets.db")))
+    client = app.test_client() if hasattr(app, "test_client") else None
+    if client is None:
+        from fastapi.testclient import TestClient
+
+        client = TestClient(app)
+
+    result = client.post("/api/datasets/public/abz9/run")
+    payload = result.json()
+
+    assert result.status_code == 200
+    assert payload["task_profile"]["task_type"] == "large_scale_benchmark_scheduling"
+    assert payload["task_profile"]["risk_level"] == "medium"
+    assert payload["selected_topology"] == "parallel_fusion"
+    assert payload["metrics"]["scheduled_operations"] == 300

@@ -140,15 +140,26 @@ class FactorySimulator:
         state.events.append({"type": "machine_alert", "machine_id": "M3", "severity": "critical"})
         return state
 
-    def create_urgent_order_o4(self, state: FactoryState) -> FactoryState:
+    def create_urgent_order(self, state: FactoryState, order_id: str = "O4") -> FactoryState:
         state = state.model_copy(deep=True)
-        if any(order.id == "O4" for order in state.orders):
+        if any(order.id == order_id for order in state.orders):
             return state
         state.orders.append(
-            self._order("O4", "urgent", TIME_1530, [("O4-CUT", "cutting", 35), ("O4-MILL", "precision", 70, ["O4-CUT"])])
+            self._order(
+                order_id,
+                "urgent",
+                TIME_1530,
+                [
+                    (f"{order_id}-CUT", "cutting", 35),
+                    (f"{order_id}-MILL", "precision", 70, [f"{order_id}-CUT"]),
+                ],
+            )
         )
-        state.events.append({"type": "order_created", "order_id": "O4", "priority": "urgent"})
+        state.events.append({"type": "order_created", "order_id": order_id, "priority": "urgent"})
         return state
+
+    def create_urgent_order_o4(self, state: FactoryState) -> FactoryState:
+        return self.create_urgent_order(state, "O4")
 
     def trigger_inventory_shortage(self, state: FactoryState) -> FactoryState:
         state = state.model_copy(deep=True)
@@ -166,6 +177,54 @@ class FactorySimulator:
         state.events.append({"type": "worker_skill_mismatch", "skill": "precision"})
         return state
 
+    def auto_step(self, state: Optional[FactoryState] = None) -> FactoryState:
+        state = state.model_copy(deep=True) if state else self.base_state()
+        state.now_minute += 15
+        event_name = self.random.choices(
+            ["normal_progress", "efficiency_drop", "material_consumption", "m3_overheat", "urgent_order"],
+            weights=[50, 20, 15, 10, 5],
+            k=1,
+        )[0]
+        if event_name == "normal_progress":
+            machine = self.random.choice(state.machines)
+            machine.temperature_c = max(15, machine.temperature_c + self.random.uniform(-3, 3))
+            state.events.append({"type": "normal_progress", "machine_id": machine.id, "minute": state.now_minute})
+        elif event_name == "efficiency_drop":
+            machine = self.random.choice(state.machines)
+            drop = self.random.uniform(0.05, 0.10)
+            machine.efficiency = max(0.5, round(machine.efficiency * (1 - drop), 3))
+            state.events.append({"type": "efficiency_drop", "machine_id": machine.id, "drop": round(drop, 3)})
+        elif event_name == "material_consumption":
+            material = self.random.choice(state.materials)
+            amount = self.random.randint(1, 2)
+            material.quantity = max(0, material.quantity - amount)
+            state.events.append({"type": "material_consumption", "material_id": material.id, "quantity": amount})
+        elif event_name == "m3_overheat":
+            state = self.trigger_m3_overheat(state)
+        elif event_name == "urgent_order":
+            state = self.create_urgent_order(state, f"O_AUTO_{state.now_minute}")
+
+        alerted_machines = {(alert.machine_id, alert.alert_type) for alert in state.alerts}
+        for machine in state.machines:
+            if machine.temperature_c > 90 and (machine.id, "temperature") not in alerted_machines:
+                if machine.temperature_c > 95:
+                    machine.status = "failed"
+                    machine.current_order_id = None
+                state.alerts.append(
+                    MachineAlert(
+                        machine_id=machine.id,
+                        alert_type="temperature",
+                        severity="critical" if machine.temperature_c > 95 else "high",
+                        message=f"{machine.id} temperature exceeded 90C during automatic simulation.",
+                        minute=state.now_minute,
+                        requires_stop=machine.temperature_c > 95,
+                    )
+                )
+                state.events.append({"type": "auto_temperature_alert", "machine_id": machine.id, "temperature_c": machine.temperature_c})
+        if self._inventory_shortage_count(state):
+            state.events.append({"type": "auto_inventory_shortage", "count": self._inventory_shortage_count(state)})
+        return state
+
     def final_abnormal_state(self) -> FactoryState:
         state = self.base_state()
         for event in ("m3_overheat", "urgent_order_o4", "inventory_shortage"):
@@ -175,6 +234,8 @@ class FactorySimulator:
 
     def profile_task(self, state: FactoryState) -> TaskProfile:
         urgent_count = sum(1 for order in state.orders if order.priority == "urgent")
+        operation_count = sum(len(order.operations) for order in state.orders)
+        large_scale = operation_count >= 200 or len(state.machines) >= 15
         failed_capabilities = {
             capability
             for machine in state.machines
@@ -187,7 +248,7 @@ class FactorySimulator:
         inventory_shortage_count = self._inventory_shortage_count(state)
         worker_conflict_count = self._worker_conflict_count(state)
         critical_alerts = [alert for alert in state.alerts if alert.severity in {"high", "critical"}]
-        risk = "critical" if critical_alerts else "high" if inventory_shortage_count else "medium" if urgent_count else "low"
+        risk = "critical" if critical_alerts else "high" if inventory_shortage_count else "medium" if urgent_count or large_scale else "low"
         task_type = "normal_scheduling"
         if critical_alerts and urgent_count:
             task_type = "high_risk_composite_incident"
@@ -195,6 +256,8 @@ class FactorySimulator:
             task_type = "machine_failure"
         elif inventory_shortage_count:
             task_type = "inventory_shortage"
+        elif large_scale:
+            task_type = "large_scale_benchmark_scheduling"
         elif resource_conflicts:
             task_type = "multi_resource_conflict"
         return TaskProfile(
@@ -205,7 +268,7 @@ class FactorySimulator:
             resource_conflict_count=resource_conflicts + len(failed_capabilities),
             inventory_shortage_count=inventory_shortage_count,
             worker_conflict_count=worker_conflict_count,
-            requires_parallel_analysis=resource_conflicts > 0 or inventory_shortage_count > 0,
+            requires_parallel_analysis=large_scale or resource_conflicts > 0 or inventory_shortage_count > 0,
             requires_critic_review=risk in {"high", "critical"},
         )
 
