@@ -109,6 +109,22 @@ def create_app(repository=None) -> FastAPI:
         )
         await websocket.close()
 
+    @app.get("/api/factory/oee")
+    def factory_oee() -> Dict[str, Any]:
+        return app.state.service.get_oee()
+
+    @app.get("/api/logs/agent")
+    def agent_logs() -> Dict[str, Any]:
+        return {"logs": app.state.service.get_agent_logs()}
+
+    @app.get("/api/events/history")
+    def events_history() -> Dict[str, Any]:
+        return {"events": app.state.service.get_event_history()}
+
+    @app.post("/api/simulation/tick")
+    def simulation_tick() -> Dict[str, Any]:
+        return app.state.service.auto_tick()
+
     return app
 
 

@@ -29,26 +29,26 @@
 
 :root,
 .dark {
-  --background: 213 25% 8%;
-  --foreground: 210 22% 93%;
-  --card: 213 25% 12%;
-  --card-foreground: 210 22% 93%;
-  --popover: 213 25% 12%;
-  --popover-foreground: 210 22% 93%;
-  --primary: 195 100% 42%;
-  --primary-foreground: 213 25% 8%;
-  --secondary: 213 25% 16%;
-  --secondary-foreground: 210 22% 93%;
-  --muted: 213 15% 35%;
-  --muted-foreground: 213 15% 60%;
-  --accent: 195 100% 42%;
-  --accent-foreground: 213 25% 8%;
-  --destructive: 16 100% 60%;
-  --destructive-foreground: 210 22% 93%;
-  --border: 213 25% 20%;
-  --input: 213 25% 20%;
-  --ring: 195 100% 42%;
-  --radius: 6px;
+  --background: 216 28% 7%;
+  --foreground: 210 20% 94%;
+  --card: 216 26% 10%;
+  --card-foreground: 210 20% 94%;
+  --popover: 216 26% 10%;
+  --popover-foreground: 210 20% 94%;
+  --primary: 192 95% 46%;
+  --primary-foreground: 216 28% 7%;
+  --secondary: 216 22% 15%;
+  --secondary-foreground: 210 20% 94%;
+  --muted: 216 18% 22%;
+  --muted-foreground: 216 14% 58%;
+  --accent: 192 95% 46%;
+  --accent-foreground: 216 28% 7%;
+  --destructive: 14 96% 58%;
+  --destructive-foreground: 210 20% 94%;
+  --border: 216 22% 18%;
+  --input: 216 22% 18%;
+  --ring: 192 95% 46%;
+  --radius: 8px;
 }
 
 * {
@@ -66,92 +66,214 @@ body {
   min-width: 1280px;
   background: hsl(var(--background));
   color: hsl(var(--foreground));
-  font-family: Inter, "Microsoft YaHei", "PingFang SC", "Segoe UI", Arial, sans-serif;
+  font-family: "Inter", "Microsoft YaHei", "PingFang SC", "Segoe UI", Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── 背景网格纹理 ─────────────────────────────── */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(hsl(var(--border) / 0.35) 1px, transparent 1px),
+    linear-gradient(90deg, hsl(var(--border) / 0.35) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: radial-gradient(ellipse 80% 80% at 50% 0%, black 40%, transparent 100%);
+}
+
+/* 所有内容浮在网格上方 */
+header, main, .fixed {
+  position: relative;
+  z-index: 1;
 }
 
 button {
   font: inherit;
 }
 
+/* ── 导航栏底部光晕线 ────────────────────────── */
+header {
+  box-shadow: 0 1px 0 hsl(var(--border)), 0 4px 24px hsl(var(--background) / 0.8);
+}
+
+header::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 10%;
+  right: 10%;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    hsl(var(--primary) / 0.5) 30%,
+    hsl(var(--primary) / 0.8) 50%,
+    hsl(var(--primary) / 0.5) 70%,
+    transparent
+  );
+}
+
+/* ── 卡片悬停 ────────────────────────────────── */
+.hover\:border-primary\/50:hover {
+  box-shadow: 0 0 0 1px hsl(var(--primary) / 0.3), 0 4px 16px hsl(var(--primary) / 0.08);
+}
+
+/* ── ReactFlow ───────────────────────────────── */
 .react-flow__attribution {
   display: none;
 }
 
 .react-flow__handle {
-  width: 7px;
-  height: 7px;
+  width: 6px;
+  height: 6px;
   border-color: hsl(var(--primary));
   background: hsl(var(--primary));
 }
 
+.react-flow__background {
+  background-color: transparent !important;
+}
+
+/* ── 流动边动画 ──────────────────────────────── */
 .flow-edge-active path {
-  stroke-dasharray: 7;
-  animation: edge-flow 0.7s linear infinite;
+  stroke-dasharray: 8 4;
+  animation: edge-flow 0.6s linear infinite;
 }
 
+/* ── 紧急订单闪烁 ────────────────────────────── */
 .urgent-row-flash {
-  animation: urgent-flash 0.55s ease-in-out 2;
+  animation: urgent-flash 0.6s ease-in-out 3;
 }
 
+/* ── 数字跳动 ────────────────────────────────── */
 .number-bump {
-  animation: number-bump 0.3s ease;
+  animation: number-bump 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
+/* ── 节点激活脉冲 ────────────────────────────── */
 .node-pulse {
-  animation: node-pulse 0.6s ease;
+  animation: node-pulse 0.7s ease;
 }
 
+/* ── 通知进度条 ──────────────────────────────── */
 .notification-progress {
   animation-name: notice-progress;
   animation-timing-function: linear;
   animation-fill-mode: forwards;
 }
 
+/* ── 服务状态点呼吸 ──────────────────────────── */
+.status-dot-active {
+  animation: status-breathe 2.4s ease-in-out infinite;
+}
+
+/* ── 高风险横幅扫光 ──────────────────────────── */
+.banner-critical-sweep {
+  position: relative;
+  overflow: hidden;
+}
+
+.banner-critical-sweep::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 60%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.06),
+    transparent
+  );
+  animation: banner-sweep 3s ease-in-out infinite;
+}
+
+/* ── 数据集卡片顶部色条发光 ─────────────────── */
+.dataset-card-bar {
+  height: 3px;
+  border-radius: 8px 8px 0 0;
+  position: relative;
+}
+
+.dataset-card-bar::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  filter: blur(4px);
+  opacity: 0.7;
+  background: inherit;
+}
+
+/* ── 主色调文字发光 ──────────────────────────── */
+.text-glow {
+  text-shadow: 0 0 20px hsl(var(--primary) / 0.5);
+}
+
+/* ── Keyframes ───────────────────────────────── */
 @keyframes edge-flow {
   to {
-    stroke-dashoffset: -20;
+    stroke-dashoffset: -24;
   }
 }
 
 @keyframes urgent-flash {
-  0%,
-  100% {
-    background: transparent;
-  }
-  50% {
-    background: rgba(244, 162, 97, 0.24);
-  }
+  0%, 100% { background: transparent; }
+  50% { background: rgba(244, 162, 97, 0.18); }
 }
 
 @keyframes number-bump {
-  0% {
-    transform: translateY(0) scale(1);
-  }
-  45% {
-    transform: translateY(-3px) scale(1.06);
-  }
-  100% {
-    transform: translateY(0) scale(1);
-  }
+  0% { transform: translateY(0) scale(1); opacity: 1; }
+  40% { transform: translateY(-4px) scale(1.08); opacity: 0.85; }
+  100% { transform: translateY(0) scale(1); opacity: 1; }
 }
 
 @keyframes node-pulse {
-  0% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.04);
-  }
-  100% {
-    transform: scale(1);
-  }
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
 }
 
 @keyframes notice-progress {
-  from {
-    width: 100%;
-  }
-  to {
-    width: 0%;
-  }
+  from { width: 100%; }
+  to { width: 0%; }
+}
+
+@keyframes status-breathe {
+  0%, 100% { opacity: 1; box-shadow: 0 0 4px currentColor; }
+  50% { opacity: 0.55; box-shadow: 0 0 2px currentColor; }
+}
+
+@keyframes banner-sweep {
+  0% { left: -100%; }
+  60%, 100% { left: 150%; }
+}
+
+/* ── 滚动条美化 ──────────────────────────────── */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--border));
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground) / 0.5);
+}
+
+/* ── 选中文字颜色 ────────────────────────────── */
+::selection {
+  background: hsl(var(--primary) / 0.25);
+  color: hsl(var(--foreground));
 }

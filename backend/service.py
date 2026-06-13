@@ -71,18 +71,15 @@ class DynaTwinService:
         if machine_id == "M3":
             state = self.simulator.trigger_m3_overheat(state)
         self.repository.save_state(state)
-        event = {"type": "machine_alert", "machine_id": machine_id}
-        self.repository.add_event(event)
-        return state.model_dump(mode="json")
+        self.repository.add_event({"type": "machine_alert", "machine_id": machine_id})
+        return self.run_state(state)
 
     def order_created(self, order_id: str = "O4") -> Dict[str, Any]:
         state = self.repository.latest_state() or self.simulator.base_state()
-        if order_id == "O4":
-            state = self.simulator.create_urgent_order_o4(state)
+        state = self.simulator.create_urgent_order(state, order_id)
         self.repository.save_state(state)
-        event = {"type": "order_created", "order_id": order_id}
-        self.repository.add_event(event)
-        return state.model_dump(mode="json")
+        self.repository.add_event({"type": "order_created", "order_id": order_id})
+        return self.run_state(state)
 
     def reset_demo(self) -> Dict[str, Any]:
         state = self.simulator.base_state()
@@ -90,4 +87,94 @@ class DynaTwinService:
         self.repository.save_state(state)
         for event in state.events:
             self.repository.add_event(event)
+        return state.model_dump(mode="json")
+
+    def get_oee(self) -> dict:
+        """计算OEE设备综合效率三项指标"""
+        state = self.repository.latest_state()
+        if not state or not state.machines:
+            return {"availability": 0.0, "performance": 0.0, "oee": 0.0, "total": 0, "available": 0, "busy": 0, "failed": 0}
+        machines = state.machines
+        total = len(machines)
+        failed = sum(1 for m in machines if getattr(m, "status", "") == "failed")
+        busy = sum(1 for m in machines if getattr(m, "status", "") == "busy")
+        available_count = total - failed
+        availability = round(available_count / total, 3) if total else 0.0
+        # 性能率：基于温度推算，温度越高性能越低
+        perf_scores = []
+        for m in machines:
+            temp = getattr(m, "temperature_c", 25)
+            if getattr(m, "status", "") == "failed":
+                perf_scores.append(0.0)
+            elif temp > 90:
+                perf_scores.append(0.5)
+            elif temp > 80:
+                perf_scores.append(0.75)
+            elif temp > 70:
+                perf_scores.append(0.85)
+            else:
+                perf_scores.append(0.95)
+        performance = round(sum(perf_scores) / len(perf_scores), 3) if perf_scores else 0.0
+        # 质量率固定0.96（无真实质检数据）
+        quality = 0.96
+        oee = round(availability * performance * quality, 3)
+        return {
+            "availability": availability,
+            "performance": performance,
+            "quality": quality,
+            "oee": oee,
+            "total": total,
+            "available": available_count,
+            "busy": busy,
+            "failed": failed,
+        }
+
+    def get_agent_logs(self) -> list:
+        """从最近执行记录中提取Agent推理日志"""
+        import time
+        execution = self.repository.latest_execution()
+        if not execution or not hasattr(execution, "agent_traces"):
+            return []
+        logs = []
+        base_ts = int(time.time())
+        for i, trace in enumerate(execution.agent_traces):
+            agent_name = getattr(trace, "agent_name", "UnknownAgent")
+            decision = getattr(trace, "decision", None)
+            action = ""
+            state_text = ""
+            risk = ""
+            if decision:
+                action = getattr(decision, "recommended_action", "") or ""
+                state_text = getattr(decision, "current_state", "") or ""
+                risk = getattr(decision, "risk_level", "") or ""
+            logs.append({
+                "timestamp": base_ts - (len(execution.agent_traces) - i) * 2,
+                "agent": agent_name.replace("Agent", ""),
+                "action": str(action)[:120],
+                "state": str(state_text)[:80],
+                "risk": str(risk),
+                "index": i,
+            })
+        return logs
+
+    def get_event_history(self) -> list:
+        """返回事件历史列表"""
+        try:
+            raw = self.repository.latest_events()
+            if not raw:
+                return []
+            if isinstance(raw, list):
+                return raw[-50:]
+            return [raw]
+        except Exception:
+            return []
+
+    def auto_tick(self) -> Dict[str, Any]:
+        state = self.repository.latest_state() or self.simulator.base_state()
+        state = self.simulator.auto_step(state)
+        self.repository.save_state(state)
+        for event in state.events[-1:]:
+            self.repository.add_event(event)
+        if state.alerts:
+            return self.run_state(state)
         return state.model_dump(mode="json")

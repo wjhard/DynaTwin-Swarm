@@ -332,6 +332,23 @@ const translationRules: { match: RegExp; value: string }[] = [
   { match: /report selected topology/i, value: "汇总拓扑选择、智能体决策链、最优方案、备选方案和风险状态。" },
   { match: /resolve material shortage/i, value: "处理物料短缺和机器容量冲突。" },
   { match: /inspect machine/i, value: "扫描设备健康状态，识别异常设备。" },
+  { match: /monitor equipment.*orders.*inventory/i, value: "监控设备、订单、库存及人员可用性。" },
+  { match: /diagnose machine fault/i, value: "诊断机器故障和安全运行能力。" },
+  { match: /assess due date.*urgent/i, value: "评估订单截止时间和紧急订单压力。" },
+  { match: /detect material.*worker.*machine/i, value: "检测物料、工人和机器资源冲突。" },
+  { match: /prepare inputs.*industrial.*solver/i, value: "为工业调度求解器准备输入数据。" },
+  { match: /ensure final schedule.*hard production/i, value: "确保最终排程满足所有硬性生产约束。" },
+  { match: /summarize operational risk/i, value: "在最终审批前汇总运营风险。" },
+  { match: /critique.*proposed schedule/i, value: "审核提议的排程方案，拒绝不安全的捷径。" },
+  { match: /produce.*auditable.*industrial.*report/i, value: "生成可审计的工业调度报告。" },
+  { match: /freeze unsafe machine/i, value: "冻结不安全机器并在调度前发布告警。" },
+  { match: /remove.*candidate machine/i, value: "从候选机器中移除故障机器，重新路由工单。" },
+  { match: /prioritize urgent.*due.date/i, value: "按截止时间优先处理紧急订单。" },
+  { match: /current capacity.*safety state.*diverges/i, value: "当前产能与安全状态偏离安全准时生产目标。" },
+  { match: /state is close to.*production goal/i, value: "当前状态接近生产目标，无需额外干预。" },
+  { match: /reject any plan using failed equipment/i, value: "拒绝使用故障设备或未经验证库存的排程方案。" },
+  { match: /approve the safest feasible decision/i, value: "经风险和审核评估后，批准最安全可行的决策。" },
+  { match: /classic 6-machine.*6-job/i, value: "经典6机器6作业车间调度基准，用于验证调度算法。" },
   { match: /analyze failure/i, value: "分析故障影响范围，并隔离不可用机器。" },
   { match: /evaluate order/i, value: "评估订单优先级、截止时间和生产压力。" },
 ];
@@ -931,7 +948,7 @@ function App() {
     <TooltipProvider>
       <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as TabKey)} className="min-h-screen bg-background text-foreground">
         <header className="fixed left-0 right-0 top-0 z-40 border-b border-border bg-background/95 backdrop-blur">
-          <div className="flex min-h-[84px] items-center gap-6 px-6">
+          <div className="flex min-h-[60px] items-center gap-6 px-6">
             <div className="flex min-w-[330px] items-center gap-3">
               <Factory className="h-7 w-7 text-primary" />
               <div>
@@ -969,7 +986,7 @@ function App() {
           </div>
         </header>
 
-        <main className="px-6 pb-8 pt-[104px]">
+        <main className="px-6 pb-8 pt-[72px] pr-16">
           <TabsContent value="realtime">
             <RealtimeTab
               banner={banner}
@@ -1213,7 +1230,12 @@ function BenchmarkTab({
                 <div className="h-1" style={{ background: color }} />
                 <CardHeader>
                   <CardTitle>{dataset.name}</CardTitle>
-                  <CardDescription className="line-clamp-3 min-h-[52px]">{dataset.description || dataset.source || "公开作业车间调度基准数据集"}</CardDescription>
+                  <CardDescription className="line-clamp-3 min-h-[52px]">{dataset.description ? dataset.description
+                    .replace("public Job Shop Scheduling benchmark for medium and large factory scheduling validation.", "公开作业车间调度基准，适用于中大型工厂调度验证。")
+                    .replace("public job-shop scheduling benchmark used to validate scheduling algorithms.", "公开作业车间调度基准，用于验证调度算法性能。")
+                    .replace("Classic 6-machine, 6-job job-shop scheduling benchmark used to validate scheduling algorithms.", "经典6机器6作业车间调度基准，用于验证调度算法。")
+                    .replace("public Job Shop Scheduling benchmark for large factory scheduling validation.", "公开作业车间调度基准，适用于大型工厂调度验证。")
+                    : "公开作业车间调度基准数据集"}</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="grid grid-cols-2 gap-2">
@@ -1222,7 +1244,7 @@ function BenchmarkTab({
                     <DatasetMetric label="工序" value={dataset.operation_count} />
                     <DatasetMetric label="最优" value={bestKnown ?? "暂无"} />
                   </div>
-                  <p className="min-h-[34px] text-xs leading-relaxed text-muted-foreground">{dataset.source || "JSSP / OR-Library benchmark"}</p>
+                  <p className="min-h-[34px] text-xs leading-relaxed text-muted-foreground">{dataset.source ? dataset.source.replace("ScheduleOpt benchmark mirror of classic public Job Shop instances", "ScheduleOpt 经典作业车间标准测试集镜像").replace("Fisher-Thompson 6x6 public job-shop instance, distributed through JSPLib / OR-Library benchmark collections", "Fisher-Thompson 6×6 经典实例，来自 JSPLib / OR-Library 基准集") : "JSSP / OR-Library 标准基准集"}</p>
                   <Button className="w-full" onClick={() => onRun(dataset)} disabled={Boolean(runningDatasetId)}>
                     {runningDatasetId === dataset.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
                     {runningDatasetId === dataset.id ? "求解中..." : "运行此数据集"}
@@ -1510,7 +1532,8 @@ function InventoryList({ inventory }: { inventory: InventoryItem[] }) {
 
 function GanttChart({ items, makespan }: { items: ScheduleItem[]; makespan: number }) {
   if (!items.length) return <EmptyState icon={<Activity className="h-5 w-5" />} text="暂无排程结果" />;
-  const visible = items.slice(0, items.length > 350 ? 350 : items.length);
+  const visible = items.slice(0, Math.min(items.length, 350));
+  const chartHeight = Math.max(200, Math.min(520, visible.length * 52 + 60));
   const machines = Array.from(new Set(items.map((item) => item.machine_id)));
   const colorByMachine = new Map(machines.map((machine, index) => [machine, MACHINE_COLORS[index % MACHINE_COLORS.length]]));
   const data = visible.map((item) => ({
@@ -1520,7 +1543,7 @@ function GanttChart({ items, makespan }: { items: ScheduleItem[]; makespan: numb
     duration: item.end_minute - item.start_minute,
   }));
   return (
-    <div className="h-[520px]">
+    <div style={{height: chartHeight}}>
       <ResponsiveContainer width="100%" height="100%">
         <BarChart layout="vertical" data={data} margin={{ left: 50, right: 30, top: 8, bottom: 8 }}>
           <CartesianGrid stroke="hsl(var(--border))" />
@@ -1572,7 +1595,7 @@ function TraceCard({ trace }: { trace: Trace }) {
   const confidence = confidencePercent(trace.decision.confidence);
   const confidenceTone = confidence < 60 ? "bg-destructive" : confidence < 80 ? "bg-amber-500" : "bg-emerald-500";
   return (
-    <Card className="grid grid-cols-[20fr_40fr_40fr] gap-4 p-4">
+    <Card className="grid grid-cols-[20fr_40fr_40fr] gap-3 p-3">
       <div className="space-y-3">
         <div>
           <h3 className="text-base font-semibold">{nodeLabel[canonical] ?? trace.agent_name.replace(/Agent$/, "")}</h3>
@@ -1602,15 +1625,15 @@ function TranslatedField({ label, original, translated, highlight = false }: { l
   const [open, setOpen] = useState(false);
   const canExpand = hasEnglish(original) && original !== translated;
   return (
-    <div className="rounded-md border bg-background p-3">
+    <div className="rounded-md border bg-background p-2">
       <span className="text-xs uppercase tracking-wide text-muted-foreground">{label}</span>
-      <p className={cn("mt-1 text-sm leading-relaxed", highlight ? "text-primary" : "text-foreground")}>{translated}</p>
+      <p className={cn("mt-0.5 text-sm leading-snug", highlight ? "text-primary" : "text-foreground")}>{translated}</p>
       {canExpand && (
-        <Button variant="link" size="sm" className="mt-1 h-auto p-0 text-xs" onClick={() => setOpen((value) => !value)}>
+        <Button variant="link" size="sm" className="mt-0.5 h-auto p-0 text-xs" onClick={() => setOpen((value) => !value)}>
           {open ? "收起原文" : "查看原文"}
         </Button>
       )}
-      {open && <code className="mt-2 block rounded-md border bg-card p-2 text-xs text-muted-foreground">{original}</code>}
+      {open && <code className="mt-1 block rounded-md border bg-card p-2 text-xs text-muted-foreground">{original}</code>}
     </div>
   );
 }
@@ -1769,16 +1792,20 @@ function buildFlow(
       data: {
         plainLabel: label,
         label: (
-          <div className="grid gap-1 text-center" title={action}>
-            <strong className="text-sm">{label}</strong>
-            <span className="truncate text-xs text-muted-foreground">{action.length > 20 ? `${action.slice(0, 20)}...` : action}</span>
+          <div className="grid gap-0.5 text-center" title={action}>
+            <strong className="text-sm font-semibold">{label}</strong>
+            {action && action !== "等待执行" && (
+              <span className="text-xs text-muted-foreground" style={{wordBreak:"break-all",whiteSpace:"normal",lineHeight:"1.2",maxHeight:"2.4em",overflow:"hidden"}}>
+                {action.length > 18 ? `${action.slice(0, 18)}…` : action}
+              </span>
+            )}
           </div>
         ),
       },
-      position: { x: (index % 3) * 190, y: Math.floor(index / 3) * 112 },
+      position: { x: (index % 3) * 210, y: Math.floor(index / 3) * 130 },
       className: active ? "node-pulse" : "",
       style: {
-        width: 158,
+        width: 170,
         borderRadius: 6,
         border: `1px solid ${active ? "hsl(var(--primary))" : riskBorder}`,
         background: active ? "rgba(0, 180, 216, 0.20)" : "hsl(var(--card))",
