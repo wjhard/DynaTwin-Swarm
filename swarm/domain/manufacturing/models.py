@@ -44,6 +44,7 @@ class Operation(DynaTwinModel):
     required_worker_skill: Optional[str] = None
     safety_level: int = Field(default=1, ge=1)
     switch_cost_minutes: int = Field(default=0, ge=0)
+    needs_reassignment: bool = False
 
 
 class Order(DynaTwinModel):
@@ -189,6 +190,7 @@ class FactoryState(DynaTwinModel):
     workers: List[Worker] = Field(default_factory=list)
     alerts: List[MachineAlert] = Field(default_factory=list)
     events: List[Dict[str, Any]] = Field(default_factory=list)
+    recovery_schedule: Dict[str, int] = Field(default_factory=dict)
     metadata: Dict[str, Any] = Field(default_factory=dict)
 
     def machine(self, machine_id: str) -> Optional[Machine]:

@@ -4,6 +4,7 @@
   "family": "StorerWuVaccari public benchmark",
   "source": "ScheduleOpt benchmark mirror of classic public Job Shop instances",
   "source_url": "https://raw.githubusercontent.com/ScheduleOpt/benchmarks/main/jobshop/instances/json/swv20.json",
+  "best_known_makespan": 1675,
   "machine_count": 10,
   "job_count": 50,
   "description": "50-job, 10-machine public Job Shop Scheduling benchmark for medium and large factory scheduling validation.",

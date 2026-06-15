@@ -199,8 +199,10 @@ class RewardCalculator:
         operations = {operation.id: operation for order in state.orders for operation in order.operations}
         by_order: Dict[str, int] = defaultdict(int)
         switch_cost = 0
+        makespan = 0
         for item in plan.items:
             by_order[item.order_id] = max(by_order[item.order_id], item.end_minute)
+            makespan = max(makespan, item.end_minute)
             switch_cost += operations[item.operation_id].switch_cost_minutes
         tardiness = sum(max(0, end - orders[order_id].due_minute) for order_id, end in by_order.items())
         safety_risk = sum(3 for violation in plan.violations if violation.severity == "critical")
@@ -220,6 +222,7 @@ class RewardCalculator:
             "agent_call_cost": float(agent_call_count),
             "scheduled_operations": float(len(plan.items)),
             "violation_count": float(len(plan.violations)),
+            "makespan": float(makespan),
         }
 
 
@@ -353,7 +356,12 @@ class IndustrialScheduleSolver:
                 model.Add(tardiness >= order_end - order.due_minute)
                 model.Add(tardiness >= 0)
                 tardiness_vars.append(tardiness * PRIORITY_WEIGHT[order.priority])
-        model.Minimize(sum(tardiness_vars) if tardiness_vars else 0)
+        if ends:
+            makespan = model.NewIntVar(0, horizon, "makespan")
+            model.AddMaxEquality(makespan, list(ends.values()))
+            model.Minimize((sum(tardiness_vars) * 100 if tardiness_vars else 0) + makespan)
+        else:
+            model.Minimize(0)
 
         solver = cp_model.CpSolver()
         solver.parameters.max_time_in_seconds = self.time_limit_seconds

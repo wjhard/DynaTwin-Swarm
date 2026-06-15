@@ -7,8 +7,6 @@
   --color-foreground: hsl(var(--foreground));
   --color-card: hsl(var(--card));
   --color-card-foreground: hsl(var(--card-foreground));
-  --color-popover: hsl(var(--popover));
-  --color-popover-foreground: hsl(var(--popover-foreground));
   --color-primary: hsl(var(--primary));
   --color-primary-foreground: hsl(var(--primary-foreground));
   --color-secondary: hsl(var(--secondary));
@@ -22,44 +20,50 @@
   --color-border: hsl(var(--border));
   --color-input: hsl(var(--input));
   --color-ring: hsl(var(--ring));
+  --color-popover: hsl(var(--popover));
+  --color-popover-foreground: hsl(var(--popover-foreground));
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
 }
 
+/* ── 核心色彩系统 ── */
 :root,
 .dark {
-  --background: 216 28% 7%;
-  --foreground: 210 20% 94%;
-  --card: 216 26% 10%;
-  --card-foreground: 210 20% 94%;
-  --popover: 216 26% 10%;
-  --popover-foreground: 210 20% 94%;
-  --primary: 192 95% 46%;
-  --primary-foreground: 216 28% 7%;
-  --secondary: 216 22% 15%;
-  --secondary-foreground: 210 20% 94%;
-  --muted: 216 18% 22%;
-  --muted-foreground: 216 14% 58%;
-  --accent: 192 95% 46%;
-  --accent-foreground: 216 28% 7%;
-  --destructive: 14 96% 58%;
-  --destructive-foreground: 210 20% 94%;
-  --border: 216 22% 18%;
-  --input: 216 22% 18%;
-  --ring: 192 95% 46%;
-  --radius: 8px;
+  /* 背景层次：三层深度 */
+  --background:      222 47% 5%;   /* #090D1A 最深底色 */
+  --card:            222 40% 8%;   /* #0F1525 卡片层 */
+  --popover:         222 40% 8%;
+  --secondary:       222 35% 13%;  /* #182030 二级卡片 */
+  --muted:           222 30% 18%;  /* #222D42 悬停/分隔 */
+
+  /* 文字层次 */
+  --foreground:          210 20% 96%;   /* #F0F3F9 主文字 */
+  --card-foreground:     210 20% 96%;
+  --popover-foreground:  210 20% 96%;
+  --secondary-foreground:210 15% 80%;
+  --muted-foreground:    220 13% 55%;   /* #7F8EA8 次要文字 */
+  --accent-foreground:   210 20% 96%;
+
+  /* 主色：蓝色系，更专业 */
+  --primary:          217 91% 60%;  /* #3B82F6 */
+  --primary-foreground: 222 47% 5%;
+  --accent:           217 91% 60%;
+
+  /* 语义色 */
+  --destructive:      0 84% 60%;   /* #EF4444 危险/故障 */
+  --destructive-foreground: 0 0% 98%;
+
+  /* 结构 */
+  --border:  222 30% 16%;   /* #1E2A3D */
+  --input:   222 30% 16%;
+  --ring:    217 91% 60%;
+  --radius:  8px;
 }
 
-* {
-  box-sizing: border-box;
-  border-color: hsl(var(--border));
-}
+* { box-sizing: border-box; border-color: hsl(var(--border)); }
 
-html {
-  min-width: 1280px;
-  background: hsl(var(--background));
-}
+html { min-width: 1280px; background: hsl(var(--background)); }
 
 body {
   margin: 0;
@@ -70,7 +74,7 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* ── 背景网格纹理 ─────────────────────────────── */
+/* ── 背景纹理 ── */
 body::before {
   content: "";
   position: fixed;
@@ -78,202 +82,98 @@ body::before {
   z-index: 0;
   pointer-events: none;
   background-image:
-    linear-gradient(hsl(var(--border) / 0.35) 1px, transparent 1px),
-    linear-gradient(90deg, hsl(var(--border) / 0.35) 1px, transparent 1px);
-  background-size: 48px 48px;
-  mask-image: radial-gradient(ellipse 80% 80% at 50% 0%, black 40%, transparent 100%);
+    linear-gradient(hsl(var(--border) / 0.5) 1px, transparent 1px),
+    linear-gradient(90deg, hsl(var(--border) / 0.5) 1px, transparent 1px);
+  background-size: 40px 40px;
+  mask-image: radial-gradient(ellipse 90% 80% at 50% 0%, black 40%, transparent 100%);
 }
 
-/* 所有内容浮在网格上方 */
-header, main, .fixed {
-  position: relative;
-  z-index: 1;
+header, main, aside, .fixed, section { position: relative; z-index: 1; }
+
+/* ── 卡片层次感 ── */
+.card, [class*="Card"] {
+  box-shadow: 0 1px 3px rgba(0,0,0,0.4), 0 1px 2px rgba(0,0,0,0.3);
 }
 
-button {
-  font: inherit;
+/* ── 左侧导航光晕 ── */
+aside {
+  box-shadow: 2px 0 20px rgba(0,0,0,0.5);
 }
 
-/* ── 导航栏底部光晕线 ────────────────────────── */
-header {
-  box-shadow: 0 1px 0 hsl(var(--border)), 0 4px 24px hsl(var(--background) / 0.8);
+/* ── 故障机器红色脉冲边框 ── */
+.machine-failed {
+  box-shadow: 0 0 0 1px hsl(var(--destructive)), 0 0 16px hsl(var(--destructive) / 0.3) !important;
+  animation: failed-pulse 2s ease-in-out infinite;
 }
 
-header::after {
-  content: "";
-  position: absolute;
-  bottom: 0;
-  left: 10%;
-  right: 10%;
-  height: 1px;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    hsl(var(--primary) / 0.5) 30%,
-    hsl(var(--primary) / 0.8) 50%,
-    hsl(var(--primary) / 0.5) 70%,
-    transparent
-  );
+/* ── 主色发光效果（用于重要KPI数字） ── */
+.text-primary-glow {
+  color: hsl(var(--primary));
+  text-shadow: 0 0 20px hsl(var(--primary) / 0.5);
 }
 
-/* ── 卡片悬停 ────────────────────────────────── */
-.hover\:border-primary\/50:hover {
-  box-shadow: 0 0 0 1px hsl(var(--primary) / 0.3), 0 4px 16px hsl(var(--primary) / 0.08);
-}
-
-/* ── ReactFlow ───────────────────────────────── */
-.react-flow__attribution {
-  display: none;
-}
-
+/* ── ReactFlow ── */
+.react-flow__attribution { display: none; }
+.react-flow__background { background-color: transparent !important; }
 .react-flow__handle {
-  width: 6px;
-  height: 6px;
+  width: 6px; height: 6px;
   border-color: hsl(var(--primary));
   background: hsl(var(--primary));
 }
 
-.react-flow__background {
-  background-color: transparent !important;
+/* ── 通知气泡进入动画 ── */
+.notice-enter {
+  animation: notice-slide-in 0.25s cubic-bezier(0.34,1.56,0.64,1);
 }
 
-/* ── 流动边动画 ──────────────────────────────── */
-.flow-edge-active path {
-  stroke-dasharray: 8 4;
-  animation: edge-flow 0.6s linear infinite;
-}
-
-/* ── 紧急订单闪烁 ────────────────────────────── */
-.urgent-row-flash {
-  animation: urgent-flash 0.6s ease-in-out 3;
-}
-
-/* ── 数字跳动 ────────────────────────────────── */
-.number-bump {
-  animation: number-bump 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-/* ── 节点激活脉冲 ────────────────────────────── */
-.node-pulse {
-  animation: node-pulse 0.7s ease;
-}
-
-/* ── 通知进度条 ──────────────────────────────── */
-.notification-progress {
-  animation-name: notice-progress;
-  animation-timing-function: linear;
-  animation-fill-mode: forwards;
-}
-
-/* ── 服务状态点呼吸 ──────────────────────────── */
+/* ── 状态呼吸灯 ── */
 .status-dot-active {
   animation: status-breathe 2.4s ease-in-out infinite;
 }
 
-/* ── 高风险横幅扫光 ──────────────────────────── */
-.banner-critical-sweep {
-  position: relative;
-  overflow: hidden;
+/* ── 节点激活 ── */
+.node-active {
+  animation: node-glow 0.6s ease;
 }
 
-.banner-critical-sweep::after {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 60%;
-  height: 100%;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(255, 255, 255, 0.06),
-    transparent
-  );
-  animation: banner-sweep 3s ease-in-out infinite;
+/* ── 数字跳动 ── */
+.num-bump {
+  animation: num-bump 0.35s cubic-bezier(0.34,1.56,0.64,1);
 }
 
-/* ── 数据集卡片顶部色条发光 ─────────────────── */
-.dataset-card-bar {
-  height: 3px;
-  border-radius: 8px 8px 0 0;
-  position: relative;
+/* ── 滚动条 ── */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: hsl(var(--border)); border-radius: 9999px; }
+::-webkit-scrollbar-thumb:hover { background: hsl(var(--muted-foreground) / 0.4); }
+
+/* ── 选中 ── */
+::selection { background: hsl(var(--primary) / 0.25); color: hsl(var(--foreground)); }
+
+/* ── Keyframes ── */
+@keyframes failed-pulse {
+  0%, 100% { box-shadow: 0 0 0 1px hsl(var(--destructive)), 0 0 12px hsl(var(--destructive)/0.25); }
+  50%       { box-shadow: 0 0 0 1px hsl(var(--destructive)), 0 0 24px hsl(var(--destructive)/0.5); }
 }
 
-.dataset-card-bar::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  filter: blur(4px);
-  opacity: 0.7;
-  background: inherit;
-}
-
-/* ── 主色调文字发光 ──────────────────────────── */
-.text-glow {
-  text-shadow: 0 0 20px hsl(var(--primary) / 0.5);
-}
-
-/* ── Keyframes ───────────────────────────────── */
-@keyframes edge-flow {
-  to {
-    stroke-dashoffset: -24;
-  }
-}
-
-@keyframes urgent-flash {
-  0%, 100% { background: transparent; }
-  50% { background: rgba(244, 162, 97, 0.18); }
-}
-
-@keyframes number-bump {
-  0% { transform: translateY(0) scale(1); opacity: 1; }
-  40% { transform: translateY(-4px) scale(1.08); opacity: 0.85; }
-  100% { transform: translateY(0) scale(1); opacity: 1; }
-}
-
-@keyframes node-pulse {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.05); }
-  100% { transform: scale(1); }
-}
-
-@keyframes notice-progress {
-  from { width: 100%; }
-  to { width: 0%; }
+@keyframes notice-slide-in {
+  from { transform: translateX(100%); opacity: 0; }
+  to   { transform: translateX(0);    opacity: 1; }
 }
 
 @keyframes status-breathe {
-  0%, 100% { opacity: 1; box-shadow: 0 0 4px currentColor; }
-  50% { opacity: 0.55; box-shadow: 0 0 2px currentColor; }
+  0%, 100% { opacity: 1;    box-shadow: 0 0 4px currentColor; }
+  50%       { opacity: 0.5; box-shadow: 0 0 2px currentColor; }
 }
 
-@keyframes banner-sweep {
-  0% { left: -100%; }
-  60%, 100% { left: 150%; }
+@keyframes node-glow {
+  0%   { filter: drop-shadow(0 0 0px hsl(var(--primary)/0)); }
+  50%  { filter: drop-shadow(0 0 8px hsl(var(--primary)/0.8)); }
+  100% { filter: drop-shadow(0 0 0px hsl(var(--primary)/0)); }
 }
 
-/* ── 滚动条美化 ──────────────────────────────── */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-::-webkit-scrollbar-thumb {
-  background: hsl(var(--border));
-  border-radius: 9999px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: hsl(var(--muted-foreground) / 0.5);
-}
-
-/* ── 选中文字颜色 ────────────────────────────── */
-::selection {
-  background: hsl(var(--primary) / 0.25);
-  color: hsl(var(--foreground));
+@keyframes num-bump {
+  0%   { transform: scale(1);    }
+  50%  { transform: scale(1.12); }
+  100% { transform: scale(1);    }
 }

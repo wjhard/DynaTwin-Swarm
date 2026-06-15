@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 from typing import Any, Dict
 
-from fastapi import FastAPI, WebSocket
+from fastapi import Body, FastAPI, HTTPException, WebSocket
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
@@ -95,6 +95,10 @@ def create_app(repository=None) -> FastAPI:
     def experiments_latest() -> Dict[str, Any]:
         return app.state.repository.latest_experiment()
 
+    @app.post("/api/experiments/run_a2c")
+    def run_a2c_experiment() -> Dict[str, Any]:
+        return app.state.service.run_a2c_experiment()
+
     @app.websocket("/ws/dashboard")
     async def dashboard(websocket: WebSocket) -> None:
         await websocket.accept()
@@ -122,8 +126,17 @@ def create_app(repository=None) -> FastAPI:
         return {"events": app.state.service.get_event_history()}
 
     @app.post("/api/simulation/tick")
-    def simulation_tick() -> Dict[str, Any]:
-        return app.state.service.auto_tick()
+    def simulation_tick(payload: Dict[str, Any] | None = Body(default=None)) -> Dict[str, Any]:
+        payload = payload or {}
+        return app.state.service.auto_tick(force_reschedule=bool(payload.get("force_reschedule", False)))
+
+    @app.post("/api/simulation/scenario")
+    def simulation_scenario(payload: Dict[str, Any] | None = Body(default=None)) -> Dict[str, Any]:
+        payload = payload or {}
+        try:
+            return app.state.service.run_simulation_scenario(str(payload.get("scenario", "random_failure")))
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
 
     return app
 

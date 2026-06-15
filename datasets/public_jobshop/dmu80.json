@@ -4,6 +4,7 @@
   "family": "DemirkolMehtaUzsoy public benchmark",
   "source": "ScheduleOpt benchmark mirror of classic public Job Shop instances",
   "source_url": "https://raw.githubusercontent.com/ScheduleOpt/benchmarks/main/jobshop/instances/json/dmu80.json",
+  "best_known_makespan": null,
   "machine_count": 20,
   "job_count": 50,
   "description": "50-job, 20-machine public Job Shop Scheduling benchmark for medium and large factory scheduling validation.",

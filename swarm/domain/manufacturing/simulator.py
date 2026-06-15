@@ -177,52 +177,229 @@ class FactorySimulator:
         state.events.append({"type": "worker_skill_mismatch", "skill": "precision"})
         return state
 
+    def _sync_recovery_metadata(self, state: FactoryState) -> None:
+        state.metadata["recovery_schedule"] = dict(state.recovery_schedule)
+
+    def _latest_schedule_items(self, state: FactoryState) -> list[dict]:
+        raw_items = state.metadata.get("last_schedule_items") or state.metadata.get("active_schedule_items") or []
+        if not isinstance(raw_items, list):
+            return []
+        return [item for item in raw_items if isinstance(item, dict)]
+
+    def _unfinished_schedule_machine_ids(self, state: FactoryState) -> set[str]:
+        return {
+            str(item.get("machine_id"))
+            for item in self._latest_schedule_items(state)
+            if int(item.get("end_minute", 0) or 0) > state.now_minute and item.get("machine_id")
+        }
+
+    def _mark_reassignment_for_machine(self, state: FactoryState, machine_id: str, current_order_id: Optional[str]) -> list[str]:
+        affected_operation_ids = {
+            str(item.get("operation_id"))
+            for item in self._latest_schedule_items(state)
+            if item.get("machine_id") == machine_id
+            and int(item.get("end_minute", 0) or 0) > state.now_minute
+            and item.get("operation_id")
+        }
+        if not affected_operation_ids and current_order_id:
+            affected_operation_ids.update(
+                operation.id
+                for order in state.orders
+                if order.id == current_order_id
+                for operation in order.operations
+            )
+        for order in state.orders:
+            for operation in order.operations:
+                if operation.id in affected_operation_ids:
+                    operation.needs_reassignment = True
+        previous = {
+            operation_id
+            for operation_id in state.metadata.get("needs_reassignment_operations", [])
+            if isinstance(operation_id, str)
+        }
+        state.metadata["needs_reassignment_operations"] = sorted(previous | affected_operation_ids)
+        return sorted(affected_operation_ids)
+
+    def trigger_random_failure(self, state: FactoryState) -> FactoryState:
+        state = state.model_copy(deep=True)
+        candidates = [machine for machine in state.machines if machine.status != "failed"]
+        if not candidates:
+            return state
+        scheduled_machine_ids = self._unfinished_schedule_machine_ids(state)
+        scheduled_candidates = [machine for machine in candidates if machine.id in scheduled_machine_ids]
+        machine = self.random.choice(scheduled_candidates or candidates)
+        current_order_id = machine.current_order_id
+        machine.status = "failed"
+        machine.current_order_id = None
+        machine.temperature_c = self.random.randint(90, 110)
+        recovery_minute = state.now_minute + self.random.randint(30, 120)
+        state.recovery_schedule[machine.id] = recovery_minute
+        reassignment_operations = self._mark_reassignment_for_machine(state, machine.id, current_order_id)
+        self._sync_recovery_metadata(state)
+        state.alerts.append(
+            MachineAlert(
+                machine_id=machine.id,
+                alert_type="machine_failure",
+                severity="critical",
+                message=f"{machine.id}发生故障，温度{machine.temperature_c}°C，已自动隔离",
+                minute=state.now_minute,
+                requires_stop=True,
+            )
+        )
+        state.events.append(
+            {
+                "type": "machine_failure",
+                "machine_id": machine.id,
+                "temperature_c": machine.temperature_c,
+                "minute": state.now_minute,
+                "recovery_minute": recovery_minute,
+                "needs_reassignment_operations": reassignment_operations,
+            }
+        )
+        state.alerts[-1].message = f"{machine.id}发生故障，温度{machine.temperature_c}°C，已自动隔离"
+        state.metadata["needs_reschedule"] = True
+        return state
+
+    def recover_random_machine(self, state: FactoryState, machine_id: Optional[str] = None) -> FactoryState:
+        state = state.model_copy(deep=True)
+        candidates = [
+            machine
+            for machine in state.machines
+            if machine.status == "failed" and (machine_id is None or machine.id == machine_id)
+        ]
+        if not candidates:
+            return state
+        machine = self.random.choice(candidates)
+        machine.status = "available"
+        machine.temperature_c = 25
+        state.alerts = [alert for alert in state.alerts if alert.machine_id != machine.id]
+        state.recovery_schedule.pop(machine.id, None)
+        for order in state.orders:
+            for operation in order.operations:
+                operation.needs_reassignment = False
+        state.metadata["needs_reassignment_operations"] = []
+        state.metadata["needs_reschedule"] = True
+        self._sync_recovery_metadata(state)
+        state.events.append(
+            {
+                "type": "machine_recovered",
+                "machine_id": machine.id,
+                "minute": state.now_minute,
+                "message": f"{machine.id}自动恢复正常，重新纳入调度资源池",
+            }
+        )
+        return state
+
+    def create_random_order(self, state: FactoryState) -> FactoryState:
+        state = state.model_copy(deep=True)
+        order_id = f"DYN_{state.now_minute}"
+        if any(order.id == order_id for order in state.orders):
+            order_id = f"{order_id}_{len(state.orders) + 1}"
+        capabilities = sorted(
+            {
+                capability
+                for machine in state.machines
+                if machine.status != "failed"
+                for capability in machine.capabilities
+            }
+        )
+        if not capabilities:
+            capabilities = sorted({capability for machine in state.machines for capability in machine.capabilities}) or ["general"]
+        priority = self.random.choice(["normal", "normal", "normal", "high", "urgent"])
+        operation_count = self.random.randint(2, 6)
+        operations = []
+        previous_operation_id = None
+        for index in range(operation_count):
+            capability = self.random.choice(capabilities)
+            operation_id = f"{order_id}-OP{index + 1}"
+            material = {"steel": 2, "coolant": 1} if capability == "precision" else {"steel": 1}
+            operations.append(
+                Operation(
+                    id=operation_id,
+                    order_id=order_id,
+                    name=f"{capability.title()} {order_id} Step {index + 1}",
+                    required_capability=capability,
+                    duration_minutes=self.random.randint(15, 90),
+                    predecessors=[previous_operation_id] if previous_operation_id else [],
+                    material_requirements=material,
+                    required_worker_skill=capability,
+                    safety_level=2 if capability == "precision" else 1,
+                    switch_cost_minutes=5 if capability == "precision" else 2,
+                )
+            )
+            previous_operation_id = operation_id
+        order = Order(
+            id=order_id,
+            priority=priority,
+            due_minute=state.now_minute + self.random.randint(150, 600),
+            operations=operations,
+            created_minute=state.now_minute,
+        )
+        state.orders.append(order)
+        state.events.append(
+            {
+                "type": "order_created",
+                "order_id": order_id,
+                "priority": priority,
+                "operation_count": operation_count,
+                "minute": state.now_minute,
+            }
+        )
+        return state
+
     def auto_step(self, state: Optional[FactoryState] = None) -> FactoryState:
         state = state.model_copy(deep=True) if state else self.base_state()
         state.now_minute += 15
+        state.metadata["needs_reschedule"] = False
+        for machine_id, recovery_minute in list(state.recovery_schedule.items()):
+            if recovery_minute <= state.now_minute:
+                state = self.recover_random_machine(state, machine_id=machine_id)
         event_name = self.random.choices(
-            ["normal_progress", "efficiency_drop", "material_consumption", "m3_overheat", "urgent_order"],
-            weights=[50, 20, 15, 10, 5],
+            ["normal_progress", "temperature_rise", "machine_recovery", "new_order", "inventory_change"],
+            weights=[45, 20, 15, 15, 5],
             k=1,
         )[0]
         if event_name == "normal_progress":
-            machine = self.random.choice(state.machines)
-            machine.temperature_c = max(15, machine.temperature_c + self.random.uniform(-3, 3))
-            state.events.append({"type": "normal_progress", "machine_id": machine.id, "minute": state.now_minute})
-        elif event_name == "efficiency_drop":
-            machine = self.random.choice(state.machines)
-            drop = self.random.uniform(0.05, 0.10)
-            machine.efficiency = max(0.5, round(machine.efficiency * (1 - drop), 3))
-            state.events.append({"type": "efficiency_drop", "machine_id": machine.id, "drop": round(drop, 3)})
-        elif event_name == "material_consumption":
-            material = self.random.choice(state.materials)
-            amount = self.random.randint(1, 2)
-            material.quantity = max(0, material.quantity - amount)
-            state.events.append({"type": "material_consumption", "material_id": material.id, "quantity": amount})
-        elif event_name == "m3_overheat":
-            state = self.trigger_m3_overheat(state)
-        elif event_name == "urgent_order":
-            state = self.create_urgent_order(state, f"O_AUTO_{state.now_minute}")
-
-        alerted_machines = {(alert.machine_id, alert.alert_type) for alert in state.alerts}
-        for machine in state.machines:
-            if machine.temperature_c > 90 and (machine.id, "temperature") not in alerted_machines:
-                if machine.temperature_c > 95:
-                    machine.status = "failed"
-                    machine.current_order_id = None
-                state.alerts.append(
-                    MachineAlert(
-                        machine_id=machine.id,
-                        alert_type="temperature",
-                        severity="critical" if machine.temperature_c > 95 else "high",
-                        message=f"{machine.id} temperature exceeded 90C during automatic simulation.",
-                        minute=state.now_minute,
-                        requires_stop=machine.temperature_c > 95,
-                    )
+            if state.machines:
+                machine = self.random.choice(state.machines)
+                machine.temperature_c = max(15, machine.temperature_c + self.random.uniform(-2, 2))
+                state.events.append({"type": "normal_progress", "machine_id": machine.id, "minute": state.now_minute})
+        elif event_name == "temperature_rise":
+            candidates = [machine for machine in state.machines if machine.status == "busy"]
+            if candidates:
+                machine = self.random.choice(candidates)
+                machine.temperature_c += self.random.randint(5, 15)
+                state.events.append(
+                    {
+                        "type": "temperature_rise",
+                        "machine_id": machine.id,
+                        "temperature_c": machine.temperature_c,
+                        "minute": state.now_minute,
+                    }
                 )
-                state.events.append({"type": "auto_temperature_alert", "machine_id": machine.id, "temperature_c": machine.temperature_c})
-        if self._inventory_shortage_count(state):
-            state.events.append({"type": "auto_inventory_shortage", "count": self._inventory_shortage_count(state)})
+                if machine.temperature_c > 88:
+                    state = self.trigger_random_failure(state)
+        elif event_name == "machine_recovery":
+            if any(machine.status == "failed" for machine in state.machines):
+                state = self.recover_random_machine(state)
+        elif event_name == "new_order":
+            state = self.create_random_order(state)
+        elif event_name == "inventory_change":
+            if state.materials:
+                material = self.random.choice(state.materials)
+                amount = self.random.randint(1, 3)
+                material.quantity = max(0, material.quantity - amount)
+                state.events.append(
+                    {
+                        "type": "inventory_change",
+                        "material_id": material.id,
+                        "quantity": amount,
+                        "minute": state.now_minute,
+                    }
+                )
+        if state.alerts:
+            state.metadata["needs_reschedule"] = True
+        self._sync_recovery_metadata(state)
         return state
 
     def final_abnormal_state(self) -> FactoryState:

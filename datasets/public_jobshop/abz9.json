@@ -4,6 +4,7 @@
   "family": "AdamsBalasZawack public benchmark",
   "source": "ScheduleOpt benchmark mirror of classic public Job Shop instances",
   "source_url": "https://raw.githubusercontent.com/ScheduleOpt/benchmarks/main/jobshop/instances/json/abz9.json",
+  "best_known_makespan": 678,
   "machine_count": 15,
   "job_count": 20,
   "description": "20-job, 15-machine public Job Shop Scheduling benchmark for medium and large factory scheduling validation.",
