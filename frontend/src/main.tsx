@@ -255,6 +255,12 @@ function machineColor(machine: Machine) {
   return "#00D4FF";
 }
 
+function factoryMachineGradient(status: string) {
+  if (status === "failed") return "#FF4444";
+  if (status === "busy") return "#2A7BFF";
+  return "#00FFFF";
+}
+
 function serviceConnected(value: unknown) {
   const text = String(value ?? "").toLowerCase();
   return Boolean(text) && !["false", "offline", "disconnected", "disabled", "error", "none"].some((token) => text.includes(token));
@@ -410,6 +416,30 @@ function App() {
     }
   }
 
+  function applyTickResponse(data: RunResult | FactoryState | null | undefined) {
+    if (!data) return;
+    const payload = data as RunResult;
+    const hasRunPayload = Boolean(payload.agent_traces || payload.best_plan?.items || payload.selected_topology || payload.topology_selection);
+    if (hasRunPayload) {
+      setResult((previous) => ({
+        ...(previous ?? {}),
+        ...payload,
+        best_plan: payload.best_plan ?? previous?.best_plan,
+        agent_traces: payload.agent_traces ?? previous?.agent_traces ?? [],
+      }));
+      if (payload.state) setState(payload.state);
+      if (payload.agent_traces) {
+        payload.agent_traces.forEach((trace) =>
+          addLog(canonicalAgent(trace.agent_name), trace.decision.recommended_action ?? "", trace.decision.risk_level ?? "low")
+        );
+      }
+      return;
+    }
+    const maybeState = data as FactoryState;
+    if (payload.state) setState(payload.state);
+    else if (maybeState.machines || maybeState.orders || maybeState.alerts || maybeState.events) setState(maybeState);
+  }
+
   async function refreshLatestState() {
     const latest = await getJson("/api/state");
     setState(latest);
@@ -453,16 +483,11 @@ function App() {
       autoRef.current = window.setInterval(async () => {
         try {
           const data = await postJson("/api/simulation/tick", { force_reschedule: false });
-          if (data?.agent_traces) {
-            applyResult(data);
-            await refreshLatestState();
-          } else {
-            setState(data);
-          }
+          applyTickResponse(data);
         } catch {
           notify("error", "自动刷新失败，请检查后端服务");
         }
-      }, 10000);
+      }, 8000);
     } else if (autoRef.current) {
       window.clearInterval(autoRef.current);
     }
@@ -606,14 +631,16 @@ function App() {
 
   return (
     <div className="screen-viewport">
-      <div className="big-screen" style={{ transform: `scale(${scale})` }}>
+      <div className="big-screen" style={{ zoom: scale }}>
         <div className="screen-glow" />
         <header className="screen-header">
           <div className="header-left">
             <span>OEE</span>
             <b style={{ color: oeeColor(oee.oee) }}>{oee.oee}%</b>
-            <i className={autoRunning ? "auto-dot on" : "auto-dot"} />
-            <em>{autoRunning ? "自动运行中" : "自动暂停"}</em>
+            <span className="auto-toggle" onClick={() => setAutoRunning((previous) => !previous)} style={{ cursor: "pointer" }}>
+              <i className={autoRunning ? "auto-dot on" : "auto-dot"} />
+              <em>{autoRunning ? "自动运行中" : "自动暂停"}</em>
+            </span>
           </div>
           <Decoration5 className="header-decoration left" />
           <h1>DynaTwin-Swarm · 工业数字孪生智能排产系统</h1>
@@ -802,11 +829,31 @@ function DvButton({
 }
 
 function buildFactory3DOption(machines: Machine[]) {
-  const cols = Math.max(2, Math.ceil(Math.sqrt(machines.length || 1)));
-  const rows = Math.max(2, Math.ceil((machines.length || 1) / cols));
+  const displayMachines =
+    machines.length > 0
+      ? machines
+      : Array.from({ length: 15 }, (_, index) => ({
+          id: `M${index + 1}`,
+          name: `Default Machine ${index + 1}`,
+          status: "available",
+          temperature_c: 25,
+          efficiency: 0.95,
+          current_order_id: "-",
+        }));
+  const cols = Math.max(2, Math.ceil(Math.sqrt(displayMachines.length || 1)));
+  const rows = Math.max(2, Math.ceil((displayMachines.length || 1) / cols));
   const xData = Array.from({ length: cols }, (_, index) => `X${index + 1}`);
   const yData = Array.from({ length: rows }, (_, index) => `Y${index + 1}`);
-  const data = machines.map((machine, index) => [index % cols, Math.floor(index / cols), machineLoad(machine), machine.id, machine.status, machine.temperature_c, machine.current_order_id ?? "-", machine.name]);
+  const data = displayMachines.map((machine, index) => [
+    index % cols,
+    Math.floor(index / cols),
+    Math.max(15, Math.round((machine.efficiency ?? 0.9) * 100)),
+    machine.id,
+    machine.status,
+    machine.temperature_c,
+    machine.current_order_id ?? "-",
+    machine.name,
+  ]);
   return {
     backgroundColor: "transparent",
     tooltip: {
@@ -844,7 +891,7 @@ function buildFactory3DOption(machines: Machine[]) {
       boxHeight: 86,
       environment: "#020B18",
       splitLine: { lineStyle: { color: "#0A2540" } },
-      viewControl: { beta: 20, alpha: 30, distance: 255, rotateSensitivity: 0, zoomSensitivity: 0 },
+      viewControl: { alpha: 25, beta: 30, distance: 200, autoRotate: false, rotateSensitivity: 1, zoomSensitivity: 1 },
       light: {
         main: { intensity: 1.8, shadow: true, shadowQuality: "high" },
         ambient: { intensity: 0.55 },
@@ -857,6 +904,7 @@ function buildFactory3DOption(machines: Machine[]) {
         data,
         bevelSize: 0.6,
         bevelSmoothness: 3,
+        barSize: 14,
         shading: "lambert",
         label: {
           show: true,
@@ -867,12 +915,11 @@ function buildFactory3DOption(machines: Machine[]) {
           fontFamily: "Courier New",
         },
         itemStyle: {
-          color: (params: any) => machineColor({ status: params.value[4] } as Machine),
+          color: (params: any) => factoryMachineGradient(params.value[4]),
           opacity: 0.92,
         },
         emphasis: {
           itemStyle: {
-            color: "#00D4FF",
             shadowBlur: 20,
             shadowColor: "#00D4FF",
           },
@@ -884,6 +931,25 @@ function buildFactory3DOption(machines: Machine[]) {
 
 function buildGanttOption(items: ScheduleItem[], makespan: number) {
   const visible = items.slice(0, 18);
+  if (!visible.length) {
+    return {
+      backgroundColor: "transparent",
+      graphic: {
+        type: "text",
+        left: "center",
+        top: "middle",
+        style: {
+          text: "触发场景演示或运行数据集后显示排程",
+          fill: "#5B8DB8",
+          fontSize: 18,
+          fontWeight: 600,
+        },
+      },
+      xAxis: { type: "value", show: false },
+      yAxis: { type: "category", show: false, data: ["等待排程"] },
+      series: [],
+    };
+  }
   const machines = Array.from(new Set(items.map((item) => item.machine_id)));
   const colorMap = new Map(machines.map((machine, index) => [machine, MACHINE_COLORS[index % MACHINE_COLORS.length]]));
   const categories = visible.map((item) => item.operation_id);
@@ -917,32 +983,51 @@ function buildGanttOption(items: ScheduleItem[], makespan: number) {
     },
     series: [
       {
-        name: "offset",
-        type: "bar",
-        stack: "schedule",
-        data: visible.map((item) => item.start_minute),
-        itemStyle: { color: "transparent" },
-        emphasis: { disabled: true },
-        barWidth: 13,
-      },
-      {
         name: "duration",
-        type: "bar",
-        stack: "schedule",
-        data: visible.map((item) => item.end_minute - item.start_minute),
-        barWidth: 13,
-        itemStyle: {
-          borderRadius: [7, 7, 7, 7],
-          shadowBlur: 8,
-          shadowColor: "#00D4FF",
-          color: (params: any) => {
-            const item = visible[params.dataIndex];
-            const base = colorMap.get(item?.machine_id ?? "") ?? "#00D4FF";
-            return new echarts.graphic.LinearGradient(0, 0, 1, 0, [
-              { offset: 0, color: "#053A68" },
-              { offset: 1, color: base },
-            ]);
-          },
+        type: "custom",
+        data: visible.map((item, index) => [
+          item.start_minute,
+          Math.max(1, item.end_minute - item.start_minute),
+          index,
+          item.machine_id,
+          item.operation_id,
+        ]),
+        renderItem: (params: any, api: any) => {
+          const start = Number(api.value(0));
+          const duration = Number(api.value(1));
+          const categoryIndex = Number(api.value(2));
+          const machineId = String(api.value(3));
+          const startPoint = api.coord([start, categoryIndex]);
+          const endPoint = api.coord([start + duration, categoryIndex]);
+          const height = 14;
+          const base = colorMap.get(machineId) ?? "#00D4FF";
+          const shape = echarts.graphic.clipRectByRect(
+            {
+              x: startPoint[0],
+              y: startPoint[1] - height / 2,
+              width: Math.max(2, endPoint[0] - startPoint[0]),
+              height,
+            },
+            {
+              x: params.coordSys.x,
+              y: params.coordSys.y,
+              width: params.coordSys.width,
+              height: params.coordSys.height,
+            }
+          );
+          if (!shape) return null;
+          return {
+            type: "rect",
+            shape,
+            style: {
+              fill: new echarts.graphic.LinearGradient(0, 0, 1, 0, [
+                { offset: 0, color: "#053A68" },
+                { offset: 1, color: base },
+              ]),
+              shadowBlur: 6,
+              shadowColor: base,
+            },
+          };
         },
       },
     ],
