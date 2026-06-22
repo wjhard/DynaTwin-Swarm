@@ -9,12 +9,17 @@ def test_mock_and_external_provider_fallbacks_are_deterministic(monkeypatch):
 
     monkeypatch.delenv("PANGU_API_KEY", raising=False)
     monkeypatch.delenv("PANGU_BASE_URL", raising=False)
+    monkeypatch.delenv("DOUBAO_API_KEY", raising=False)
+    monkeypatch.delenv("DOUBAO_MODEL", raising=False)
+    monkeypatch.delenv("ARK_API_KEY", raising=False)
+    monkeypatch.delenv("ARK_MODEL", raising=False)
     monkeypatch.delenv("MINDIE_BASE_URL", raising=False)
     monkeypatch.delenv("OPENAI_API_KEY", raising=False)
 
     providers = [
         get_industrial_provider("mock"),
         get_industrial_provider("pangu"),
+        get_industrial_provider("doubao"),
         get_industrial_provider("mindie"),
         get_industrial_provider("openai_optional"),
     ]
@@ -23,5 +28,6 @@ def test_mock_and_external_provider_fallbacks_are_deterministic(monkeypatch):
 
     assert "mock decision" in outputs[0]
     assert "Pangu mock fallback" in outputs[1]
-    assert "MindIE mock fallback" in outputs[2]
-    assert "OpenAI optional mock fallback" in outputs[3]
+    assert "Doubao mock fallback" in outputs[2]
+    assert "MindIE mock fallback" in outputs[3]
+    assert "OpenAI optional mock fallback" in outputs[4]

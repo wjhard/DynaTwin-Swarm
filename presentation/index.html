@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>DynaTwin-Swarm 路演PPT</title>
+  <style>
+    :root {
+      --bg: #06111f;
+      --bg-deep: #020814;
+      --glass: rgba(255, 255, 255, 0.08);
+      --glass-strong: rgba(255, 255, 255, 0.13);
+      --border: rgba(153, 213, 255, 0.22);
+      --border-strong: rgba(125, 211, 252, 0.45);
+      --text: #f1f7ff;
+      --muted: #a9bdd4;
+      --dim: #6f86a2;
+      --cyan: #7dd3fc;
+      --blue: #38bdf8;
+      --violet: #c084fc;
+      --pink: #f0abfc;
+      --green: #86efac;
+      --amber: #fde68a;
+      --red: #fca5a5;
+      --shadow: 0 24px 80px rgba(0, 0, 0, 0.38), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+      --radius: 24px;
+      font-family: "Inter", "Noto Sans SC", "Microsoft YaHei", system-ui, sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; height: 100%; overflow: hidden; background: var(--bg-deep); color: var(--text); }
+    body {
+      background:
+        radial-gradient(circle at 14% 14%, rgba(125, 211, 252, 0.23), transparent 32%),
+        radial-gradient(circle at 82% 18%, rgba(192, 132, 252, 0.20), transparent 36%),
+        radial-gradient(circle at 60% 88%, rgba(56, 189, 248, 0.13), transparent 42%),
+        linear-gradient(135deg, #020814 0%, #071a31 48%, #0b1024 100%);
+      letter-spacing: 0;
+    }
+
+    .deck { width: 100vw; height: 100vh; position: relative; overflow: hidden; }
+    .deck::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background-image:
+        linear-gradient(rgba(125, 211, 252, 0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(125, 211, 252, 0.05) 1px, transparent 1px);
+      background-size: 44px 44px;
+      mask-image: radial-gradient(circle at center, black, transparent 78%);
+    }
+
+    .slide {
+      position: absolute;
+      inset: 0;
+      padding: 62px 82px 58px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      opacity: 0;
+      transform: translateX(36px) scale(0.985);
+      pointer-events: none;
+      transition: opacity 460ms ease, transform 460ms ease;
+    }
+    .slide.is-active { opacity: 1; transform: translateX(0) scale(1); pointer-events: auto; z-index: 2; }
+    .slide.is-prev { transform: translateX(-36px) scale(0.985); }
+
+    .topline {
+      position: absolute;
+      left: 82px;
+      right: 82px;
+      top: 28px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: var(--dim);
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+    }
+    .topline::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: -14px;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(125, 211, 252, 0.65), transparent);
+    }
+    .slide-number::before { content: attr(data-current); }
+    .slide-number::after { content: " / " attr(data-total); }
+
+    h1, h2, h3, p { margin: 0; }
+    .kicker { color: var(--cyan); font-size: 15px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 16px; }
+    .title { font-size: 66px; line-height: 1.06; font-weight: 900; letter-spacing: -0.02em; max-width: 1180px; }
+    .subtitle { margin-top: 22px; color: var(--muted); font-size: 28px; line-height: 1.45; max-width: 1000px; }
+    .section-title { font-size: 48px; line-height: 1.12; font-weight: 850; margin-bottom: 28px; }
+    .gradient-text {
+      background: linear-gradient(135deg, var(--cyan), var(--violet) 58%, var(--pink));
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+
+    .glass {
+      background: linear-gradient(135deg, rgba(255,255,255,0.12), rgba(255,255,255,0.045));
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+      border-radius: var(--radius);
+      backdrop-filter: blur(28px) saturate(170%);
+      -webkit-backdrop-filter: blur(28px) saturate(170%);
+      position: relative;
+      overflow: hidden;
+    }
+    .glass::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(120deg, rgba(255,255,255,0.16), transparent 28%, transparent 76%, rgba(125,211,252,0.08));
+      pointer-events: none;
+    }
+    .card { padding: 28px; min-height: 180px; }
+    .card h3 { font-size: 28px; margin-bottom: 14px; }
+    .card p { color: var(--muted); font-size: 19px; line-height: 1.55; }
+    .grid { display: grid; gap: 24px; }
+    .g2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .g3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .g4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .mt { margin-top: 24px; }
+    .small { color: var(--muted); font-size: 18px; line-height: 1.55; }
+    .badge { display: inline-flex; align-items: center; gap: 8px; padding: 7px 13px; border-radius: 999px; border: 1px solid var(--border-strong); color: var(--cyan); background: rgba(125,211,252,0.08); font-size: 15px; font-weight: 700; }
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; box-shadow: 0 0 18px currentColor; }
+
+    .cover { align-items: flex-start; }
+    .cover-orb {
+      position: absolute;
+      right: -80px;
+      bottom: -120px;
+      width: 620px;
+      height: 620px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 35% 35%, rgba(125, 211, 252, 0.42), rgba(192,132,252,0.16) 45%, transparent 70%);
+      filter: blur(2px);
+      opacity: 0.75;
+    }
+    .cover-panel {
+      width: 74%;
+      padding: 56px 58px;
+      border-radius: 34px;
+    }
+    .cover-tags { display: flex; gap: 14px; margin-top: 34px; flex-wrap: wrap; }
+
+    .footer-note {
+      margin-top: 28px;
+      color: var(--muted);
+      font-size: 21px;
+      line-height: 1.55;
+      padding: 20px 26px;
+      border-left: 4px solid var(--cyan);
+    }
+
+    .arch {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 18px;
+    }
+    .layer {
+      display: grid;
+      grid-template-columns: 220px 1fr;
+      gap: 20px;
+      align-items: stretch;
+      padding: 22px;
+    }
+    .layer-name { font-size: 28px; font-weight: 850; color: var(--cyan); display: flex; align-items: center; }
+    .layer-items { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+    .chip {
+      border: 1px solid rgba(125,211,252,0.22);
+      background: rgba(125,211,252,0.08);
+      border-radius: 16px;
+      padding: 18px;
+      font-size: 18px;
+      color: var(--text);
+    }
+    .arrow-down { height: 20px; display: flex; align-items: center; justify-content: center; color: var(--cyan); font-weight: 900; opacity: 0.75; }
+
+    .topology-map {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 18px;
+      margin-top: 18px;
+    }
+    .topo-card { padding: 22px 18px; min-height: 230px; }
+    .topo-name { font-weight: 850; color: var(--text); font-size: 22px; margin-bottom: 18px; text-align: center; }
+    .node-row { display: flex; align-items: center; justify-content: center; gap: 7px; margin-top: 12px; }
+    .node {
+      width: 34px;
+      height: 34px;
+      border-radius: 12px;
+      border: 1px solid rgba(125,211,252,0.5);
+      background: rgba(125,211,252,0.13);
+      box-shadow: 0 0 22px rgba(125,211,252,0.25);
+    }
+    .edge { height: 1px; flex: 1; max-width: 28px; background: rgba(125,211,252,0.6); }
+    .topo-caption { color: var(--muted); font-size: 15px; line-height: 1.45; margin-top: 16px; text-align: center; }
+
+    .flow {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 20px;
+      margin-top: 18px;
+    }
+    .step { padding: 28px 24px; min-height: 230px; }
+    .step-num { font-size: 46px; line-height: 1; color: var(--cyan); font-family: "Courier New", monospace; font-weight: 900; margin-bottom: 18px; }
+    .step h3 { font-size: 28px; margin-bottom: 12px; }
+    .agents {
+      display: grid;
+      grid-template-columns: repeat(11, 1fr);
+      gap: 8px;
+      margin-top: 20px;
+    }
+    .agent-pill {
+      border: 1px solid rgba(125,211,252,0.25);
+      background: rgba(255,255,255,0.06);
+      border-radius: 14px;
+      padding: 10px 6px;
+      text-align: center;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .huawei-grid { display: grid; grid-template-columns: 1.05fr 1fr; gap: 28px; align-items: stretch; }
+    .stack-list { display: grid; gap: 14px; }
+    .stack-item { display: flex; justify-content: space-between; gap: 18px; padding: 17px 19px; border-radius: 16px; border: 1px solid rgba(125,211,252,0.22); background: rgba(125,211,252,0.07); }
+    .stack-item b { color: var(--text); font-size: 20px; }
+    .stack-item span { color: var(--muted); font-size: 17px; }
+
+    .dashboard-shot {
+      height: 590px;
+      padding: 24px;
+      display: grid;
+      grid-template-columns: 25% 50% 25%;
+      grid-template-rows: 70px 1fr 190px;
+      gap: 16px;
+    }
+    .dash-header { grid-column: 1 / 4; display: flex; align-items: center; justify-content: space-between; padding: 0 22px; border-radius: 18px; background: rgba(2, 11, 24, 0.72); border: 1px solid rgba(125,211,252,0.22); }
+    .dash-panel { border-radius: 18px; border: 1px solid rgba(125,211,252,0.18); background: rgba(255,255,255,0.055); padding: 18px; position: relative; }
+    .dash-panel h4 { margin: 0 0 14px; color: var(--cyan); font-size: 18px; }
+    .factory-grid { height: 100%; display: grid; grid-template-columns: repeat(5,1fr); gap: 11px; align-items: end; }
+    .machine-bar { min-height: 56px; border-radius: 12px 12px 5px 5px; background: linear-gradient(180deg, #7dd3fc, #0e7490); box-shadow: 0 0 18px rgba(125,211,252,0.38); display: flex; align-items: flex-start; justify-content: center; padding-top: 8px; font-family: "Courier New", monospace; font-weight: 800; }
+    .machine-bar.bad { background: linear-gradient(180deg, #fca5a5, #7f1d1d); box-shadow: 0 0 20px rgba(252,165,165,0.38); }
+    .log-line, .order-line { color: var(--muted); font-family: "Courier New", monospace; font-size: 14px; margin: 9px 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .gantt-row { display: grid; grid-template-columns: 72px 1fr; gap: 10px; align-items: center; margin: 10px 0; color: var(--muted); font-size: 13px; }
+    .gantt-track { height: 18px; border-radius: 999px; background: rgba(255,255,255,0.07); overflow: hidden; }
+    .gantt-fill { height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--cyan), var(--violet)); box-shadow: 0 0 16px rgba(125,211,252,0.5); }
+    .callout {
+      position: absolute;
+      padding: 8px 12px;
+      background: rgba(125,211,252,0.16);
+      border: 1px solid rgba(125,211,252,0.42);
+      border-radius: 999px;
+      color: var(--text);
+      font-size: 14px;
+      white-space: nowrap;
+      box-shadow: 0 0 24px rgba(125,211,252,0.16);
+    }
+
+    table { width: 100%; border-collapse: separate; border-spacing: 0 12px; }
+    th { color: var(--dim); font-size: 15px; font-weight: 700; text-align: left; padding: 0 16px; }
+    td { padding: 18px 16px; background: rgba(255,255,255,0.07); color: var(--text); font-size: 19px; border-top: 1px solid rgba(125,211,252,0.16); border-bottom: 1px solid rgba(125,211,252,0.16); }
+    td:first-child { border-left: 1px solid rgba(125,211,252,0.16); border-radius: 16px 0 0 16px; font-weight: 850; color: var(--cyan); }
+    td:last-child { border-right: 1px solid rgba(125,211,252,0.16); border-radius: 0 16px 16px 0; }
+    .metric { font-size: 38px; font-weight: 900; font-family: "Courier New", monospace; color: var(--cyan); }
+    .metric-label { color: var(--muted); font-size: 15px; margin-top: 6px; }
+
+    .scenario-card { min-height: 240px; padding: 28px; }
+    .scenario-card h3 { font-size: 25px; color: var(--text); }
+    .scenario-card .icon { width: 48px; height: 48px; border-radius: 16px; margin-bottom: 20px; background: linear-gradient(135deg, rgba(125,211,252,0.8), rgba(192,132,252,0.65)); box-shadow: 0 0 24px rgba(125,211,252,0.26); }
+    .benefit-card { min-height: 320px; }
+    .benefit-card .metric { margin: 18px 0 8px; }
+
+    .team-layout { display: grid; grid-template-columns: 0.9fr 1.1fr; gap: 28px; align-items: stretch; }
+    .team-badge { height: 100%; min-height: 430px; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 42px; }
+    .team-mark { width: 150px; height: 150px; border-radius: 44px; background: linear-gradient(135deg, rgba(125,211,252,0.26), rgba(192,132,252,0.22)); border: 1px solid rgba(255,255,255,0.16); display: grid; place-items: center; margin-bottom: 28px; box-shadow: inset 0 1px 0 rgba(255,255,255,0.12), 0 24px 70px rgba(0,0,0,0.32); }
+    .team-mark span { font-size: 58px; font-weight: 900; color: var(--cyan); font-family: "Courier New", monospace; }
+    .team-list { display: grid; gap: 16px; }
+    .team-item { padding: 20px 22px; border-radius: 18px; background: rgba(255,255,255,0.06); border: 1px solid rgba(125,211,252,0.17); }
+    .team-item b { color: var(--cyan); margin-right: 10px; }
+
+    .summary-list { display: grid; gap: 18px; max-width: 970px; margin-top: 26px; }
+    .summary-item { display: grid; grid-template-columns: 60px 1fr; gap: 18px; align-items: center; padding: 23px 26px; }
+    .summary-index { width: 48px; height: 48px; border-radius: 16px; background: rgba(125,211,252,0.14); color: var(--cyan); display: grid; place-items: center; font-weight: 900; font-family: "Courier New", monospace; }
+    .contact { margin-top: 28px; padding: 22px 26px; color: var(--muted); font-size: 18px; line-height: 1.7; }
+
+    .progress-bar { position: fixed; left: 0; right: 0; bottom: 0; height: 3px; z-index: 20; background: transparent; }
+    .progress-bar span { display: block; width: 0; height: 100%; background: linear-gradient(90deg, var(--cyan), var(--violet)); transition: width 300ms ease; }
+    .notes { display: none; }
+    .hint { position: fixed; right: 28px; bottom: 22px; z-index: 30; color: rgba(233,244,255,0.46); font-size: 12px; }
+
+    .overview {
+      position: fixed;
+      inset: 0;
+      background: rgba(2, 8, 20, 0.94);
+      z-index: 40;
+      display: none;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 18px;
+      padding: 42px;
+      overflow: auto;
+    }
+    .overview.open { display: grid; }
+    .thumb { height: 150px; border: 1px solid rgba(125,211,252,0.24); border-radius: 16px; background: rgba(255,255,255,0.06); padding: 18px; cursor: pointer; color: var(--text); }
+    .thumb small { color: var(--cyan); }
+    .thumb b { display: block; margin-top: 16px; font-size: 18px; }
+  </style>
+</head>
+<body>
+  <div class="deck" id="deck">
+    <section class="slide cover is-active" data-title="封面">
+      <div class="topline"><span>DynaTwin-Swarm</span><span class="slide-number" data-current="1" data-total="12"></span></div>
+      <div class="cover-orb"></div>
+      <div class="glass cover-panel">
+        <p class="kicker">2026 Guizhou AI Entrepreneurship Competition</p>
+        <h1 class="title">DynaTwin-Swarm · <span class="gradient-text">工业数字孪生智能排产系统</span></h1>
+        <p class="subtitle">2026年贵州省人工智能创业大赛 · 昇腾AI创新赛题</p>
+        <div class="cover-tags">
+          <span class="badge"><i class="dot"></i> 多智能体协作</span>
+          <span class="badge"><i class="dot"></i> 工业数字孪生</span>
+          <span class="badge"><i class="dot"></i> CP-SAT智能排程</span>
+          <span class="badge"><i class="dot"></i> 华为昇腾生态</span>
+        </div>
+      </div>
+      <div class="notes">开场强调系统定位：这不是单纯的排产看板，而是把数字孪生、动态多智能体拓扑、目标状态反射推理和约束优化调度连在一起的一套工业AI系统。</div>
+    </section>
+
+    <section class="slide" data-title="问题背景">
+      <div class="topline"><span>Problem</span><span class="slide-number" data-current="2" data-total="12"></span></div>
+      <p class="kicker">工业现场的真实瓶颈</p>
+      <h2 class="section-title">排产系统最怕的不是计划，而是<span class="gradient-text">扰动之后的快速重排</span></h2>
+      <div class="grid g3">
+        <div class="glass card"><h3>响应迟滞</h3><p>传统排产在设备故障后往往需要数小时才能重新排程，产线损失持续扩大。</p></div>
+        <div class="glass card"><h3>人工依赖</h3><p>调度决策高度依赖老师傅经验，知识难以沉淀、复用和规模化迁移。</p></div>
+        <div class="glass card"><h3>扰动处理弱</h3><p>紧急插单、库存短缺、设备过热等事件同时发生时，系统难以快速响应。</p></div>
+      </div>
+      <div class="glass footer-note">贵州磷化工、非煤矿山和工业园区生产场景中，设备分布广、工艺链条长、扰动频繁，亟需一套可解释、可重排、可本地化落地的工业AI排产系统。</div>
+      <div class="notes">这一页要把痛点讲得具体：贵州本地工业场景不是实验室里的稳定流程，而是有设备、物料、人员、订单多重约束的现场系统。</div>
+    </section>
+
+    <section class="slide" data-title="解决方案">
+      <div class="topline"><span>Solution</span><span class="slide-number" data-current="3" data-total="12"></span></div>
+      <p class="kicker">三层系统架构</p>
+      <h2 class="section-title">从现场感知到智能决策，再到<span class="gradient-text">可执行排程</span></h2>
+      <div class="arch">
+        <div class="glass layer">
+          <div class="layer-name">感知层</div>
+          <div class="layer-items"><div class="chip">IoT传感器</div><div class="chip">设备温度 / 状态</div><div class="chip">数字孪生工厂状态</div></div>
+        </div>
+        <div class="arrow-down">↓</div>
+        <div class="glass layer">
+          <div class="layer-name">决策层</div>
+          <div class="layer-items"><div class="chip">11个AI智能体协作</div><div class="chip">ReflAct反射推理</div><div class="chip">动态图拓扑选择</div></div>
+        </div>
+        <div class="arrow-down">↓</div>
+        <div class="glass layer">
+          <div class="layer-name">执行层</div>
+          <div class="layer-items"><div class="chip">CP-SAT约束求解</div><div class="chip">甘特图排程可视化</div><div class="chip">事件驱动自动重排</div></div>
+        </div>
+      </div>
+      <div class="notes">用三层结构让评委快速理解系统边界：上面接工厂状态，中间由智能体做判断，下面生成可以执行的排程方案。</div>
+    </section>
+
+    <section class="slide" data-title="动态图结构自适应选择">
+      <div class="topline"><span>Core Tech 01</span><span class="slide-number" data-current="4" data-total="12"></span></div>
+      <p class="kicker">DynaSwarm · EMNLP 2025</p>
+      <h2 class="section-title">动态图结构自适应选择：让智能体<span class="gradient-text">按场景改变协作方式</span></h2>
+      <div class="topology-map">
+        <div class="glass topo-card"><div class="topo-name">串行链</div><div class="node-row"><i class="node"></i><i class="edge"></i><i class="node"></i><i class="edge"></i><i class="node"></i></div><p class="topo-caption">低风险任务按顺序稳定执行，降低沟通成本。</p></div>
+        <div class="glass topo-card"><div class="topo-name">并行汇聚</div><div class="node-row"><i class="node"></i><i class="node"></i><i class="node"></i></div><div class="node-row"><i class="edge"></i><i class="node"></i><i class="edge"></i></div><p class="topo-caption">多智能体并行分析，再汇总为统一决策。</p></div>
+        <div class="glass topo-card"><div class="topo-name">层级树</div><div class="node-row"><i class="node"></i></div><div class="node-row"><i class="node"></i><i class="node"></i><i class="node"></i></div><p class="topo-caption">复杂任务按职责分解，适合大型工厂实例。</p></div>
+        <div class="glass topo-card"><div class="topo-name">全连接</div><div class="node-row"><i class="node"></i><i class="node"></i><i class="node"></i></div><div class="node-row"><i class="node"></i><i class="node"></i><i class="node"></i></div><p class="topo-caption">充分交换信息，适合高不确定性分析。</p></div>
+        <div class="glass topo-card"><div class="topo-name">高风险审查</div><div class="node-row"><i class="node"></i><i class="edge"></i><i class="node"></i></div><div class="node-row"><i class="node"></i><i class="edge"></i><i class="node"></i></div><p class="topo-caption">故障、告警、插单触发审核链，保障安全。</p></div>
+      </div>
+      <div class="glass footer-note">A2C强化学习根据设备状态、订单压力、告警数量和排程反馈，持续学习不同拓扑的收益概率，动态选择最优协作结构。</div>
+      <div class="notes">重点讲清楚：不是固定工作流，而是智能体的连接方式会随工厂风险动态变化。这是系统区别于普通Agent Demo的核心。</div>
+    </section>
+
+    <section class="slide" data-title="ReflAct目标状态反射推理">
+      <div class="topline"><span>Core Tech 02</span><span class="slide-number" data-current="5" data-total="12"></span></div>
+      <p class="kicker">ReflAct · EMNLP 2025</p>
+      <h2 class="section-title">ReflAct目标状态反射推理：让每个Agent输出<span class="gradient-text">可审计决策</span></h2>
+      <div class="flow">
+        <div class="glass step"><div class="step-num">01</div><h3>观察</h3><p class="small">读取当前设备、订单、物料、告警和历史排程状态。</p></div>
+        <div class="glass step"><div class="step-num">02</div><h3>目标</h3><p class="small">明确当前生产目标：交期、产能、安全和资源利用率。</p></div>
+        <div class="glass step"><div class="step-num">03</div><h3>偏差</h3><p class="small">比较目标状态与现实状态，识别故障影响和约束冲突。</p></div>
+        <div class="glass step"><div class="step-num">04</div><h3>动作</h3><p class="small">给出建议动作，并进入CP-SAT求解和拓扑审查流程。</p></div>
+      </div>
+      <div class="agents">
+        <div class="agent-pill">任务路由</div><div class="agent-pill">设备监控</div><div class="agent-pill">故障诊断</div><div class="agent-pill">订单分析</div><div class="agent-pill">资源分配</div><div class="agent-pill">调度求解</div><div class="agent-pill">约束验证</div><div class="agent-pill">风险评估</div><div class="agent-pill">决策审核</div><div class="agent-pill">报告生成</div><div class="agent-pill">图选择器</div>
+      </div>
+      <div class="glass footer-note">豆包大模型作为Agent大脑，负责生成中文ReflAct推理说明；约束求解、设备隔离和排程重算由确定性工业模块执行。</div>
+      <div class="notes">强调“可审计”：我们不展示不可控的思维链，而是保存观察、目标、偏差和建议动作这些业务字段。</div>
+    </section>
+
+    <section class="slide" data-title="华为技术集成">
+      <div class="topline"><span>Huawei Stack</span><span class="slide-number" data-current="6" data-total="12"></span></div>
+      <p class="kicker">昇腾AI创新赛题适配</p>
+      <h2 class="section-title">面向华为昇腾AI体系的<span class="gradient-text">全栈集成设计</span></h2>
+      <div class="huawei-grid">
+        <div class="glass card">
+          <h3>技术栈接入</h3>
+          <p>系统预留华为云与昇腾生态适配层，真实凭证缺失时默认进入本地Mock模式，保证演示和测试可完整跑通。</p>
+          <div class="grid g2 mt">
+            <div><div class="metric">7</div><div class="metric-label">类华为服务适配</div></div>
+            <div><div class="metric">Mock</div><div class="metric-label">无密钥可离线演示</div></div>
+          </div>
+        </div>
+        <div class="stack-list">
+          <div class="stack-item"><b>盘古大模型</b><span>工业Agent推理接口</span></div>
+          <div class="stack-item"><b>MindIE</b><span>本地推理服务适配</span></div>
+          <div class="stack-item"><b>GaussDB</b><span>工业状态与事件存储</span></div>
+          <div class="stack-item"><b>IoTDA / EventGrid</b><span>设备事件接入与分发</span></div>
+          <div class="stack-item"><b>FunctionGraph / OBS</b><span>事件触发与产物归档</span></div>
+          <div class="stack-item"><b>ModelArts</b><span>图选择器训练与评估</span></div>
+        </div>
+      </div>
+      <div class="notes">这一页说明工程接入能力：不是只写概念，而是后端已经按适配器模式准备华为服务入口，并且提供本地Mock。</div>
+    </section>
+
+    <section class="slide" data-title="系统演示截图">
+      <div class="topline"><span>Dashboard Demo</span><span class="slide-number" data-current="7" data-total="12"></span></div>
+      <p class="kicker">一屏掌控全局</p>
+      <h2 class="section-title">系统Dashboard：从工厂状态到AI决策与排程结果</h2>
+      <div class="glass dashboard-shot">
+        <div class="dash-header"><b>DynaTwin-Swarm 智能排产大屏</b><span class="badge"><i class="dot"></i> 高风险审查拓扑</span></div>
+        <div class="dash-panel"><h4>设备状态</h4><div class="factory-grid"><div class="machine-bar" style="height:60%">M1</div><div class="machine-bar" style="height:78%">M2</div><div class="machine-bar bad" style="height:92%">M3</div><div class="machine-bar" style="height:66%">M4</div><div class="machine-bar" style="height:84%">M5</div></div><span class="callout" style="left:18px;bottom:14px;">3D工厂布局</span></div>
+        <div class="dash-panel"><h4>排程甘特图</h4><div class="gantt-row"><span>O1-CUT</span><div class="gantt-track"><div class="gantt-fill" style="width:36%;margin-left:8%"></div></div></div><div class="gantt-row"><span>O2-MILL</span><div class="gantt-track"><div class="gantt-fill" style="width:52%;margin-left:24%"></div></div></div><div class="gantt-row"><span>O4-CUT</span><div class="gantt-track"><div class="gantt-fill" style="width:28%;margin-left:5%"></div></div></div><div class="gantt-row"><span>O4-MILL</span><div class="gantt-track"><div class="gantt-fill" style="width:44%;margin-left:40%"></div></div></div><span class="callout" style="right:18px;bottom:14px;">排程甘特图</span></div>
+        <div class="dash-panel"><h4>AI推理日志</h4><p class="log-line">[Monitor] 检测M3过热故障</p><p class="log-line">[Risk] 切换高风险审查</p><p class="log-line">[Schedule] 隔离故障机器重排</p><p class="log-line">[Report] 输出最终方案</p><span class="callout" style="left:18px;bottom:14px;">AI推理日志</span></div>
+        <div class="dash-panel" style="grid-column:1/3;"><h4>动态Agent拓扑</h4><div class="node-row" style="justify-content:flex-start;"><i class="node"></i><i class="edge" style="max-width:120px"></i><i class="node"></i><i class="edge" style="max-width:120px"></i><i class="node"></i><i class="edge" style="max-width:120px"></i><i class="node"></i></div></div>
+        <div class="dash-panel"><h4>订单队列</h4><p class="order-line">O_URGENT 紧急 2道工序</p><p class="order-line">O2 高优先 2道工序</p><p class="order-line">O1 普通 2道工序</p><span class="callout" style="right:18px;bottom:14px;">订单队列</span></div>
+      </div>
+      <div class="notes">如果现场打开系统，可以切换到真实Dashboard展示；PPT里这页作为截图式总览，让评委知道每个区域对应什么功能。</div>
+    </section>
+
+    <section class="slide" data-title="技术验证数据">
+      <div class="topline"><span>Benchmark</span><span class="slide-number" data-current="8" data-total="12"></span></div>
+      <p class="kicker">公共数据集验证</p>
+      <h2 class="section-title">标准Job-Shop数据集验证：从演示走向<span class="gradient-text">可量化评估</span></h2>
+      <table>
+        <thead><tr><th>数据集</th><th>作业/机器</th><th>系统Makespan</th><th>最优已知</th><th>差距</th><th>求解时间</th></tr></thead>
+        <tbody>
+          <tr><td>ABZ9</td><td>20 / 15</td><td>示例待跑</td><td>678</td><td>-</td><td>-</td></tr>
+          <tr><td>DMU80</td><td>80 / 20</td><td>示例待跑</td><td>暂无</td><td>-</td><td>-</td></tr>
+          <tr><td>FT06</td><td>6 / 6</td><td><b>67</b></td><td>55</td><td><b style="color:var(--amber)">21.8%</b></td><td><b>81ms</b></td></tr>
+          <tr><td>LA40</td><td>15 / 15</td><td>示例待跑</td><td>1222</td><td>-</td><td>-</td></tr>
+          <tr><td>SWV20</td><td>50 / 10</td><td>示例待跑</td><td>1675</td><td>-</td><td>-</td></tr>
+        </tbody>
+      </table>
+      <div class="glass footer-note">FT06结果：Makespan=67，最优解55，差距21.8%，求解时间81ms。系统同时记录拓扑选择、Agent决策链与排程结果，便于后续持续优化。</div>
+      <div class="notes">讲这页时要诚实：不是所有数据都宣称最优，而是突出已经接入公共数据集和评测闭环，后续可以持续优化。</div>
+    </section>
+
+    <section class="slide" data-title="应用场景">
+      <div class="topline"><span>Scenarios</span><span class="slide-number" data-current="9" data-total="12"></span></div>
+      <p class="kicker">贵州本地工业适配</p>
+      <h2 class="section-title">四类可落地应用场景</h2>
+      <div class="grid g4">
+        <div class="glass scenario-card"><div class="icon"></div><h3>磷化工生产调度</h3><p class="small">围绕连续生产、设备维护、物料约束，实现异常后的快速重排。</p></div>
+        <div class="glass scenario-card"><div class="icon"></div><h3>非煤矿山作业调度</h3><p class="small">适配采掘、运输、检修协同场景，提升资源利用和安全响应能力。</p></div>
+        <div class="glass scenario-card"><div class="icon"></div><h3>智能制造产线优化</h3><p class="small">支持多设备、多工序、多订单的动态排程与瓶颈识别。</p></div>
+        <div class="glass scenario-card"><div class="icon"></div><h3>工业园区数字孪生</h3><p class="small">面向园区级设备状态、订单流和能耗协同，建设统一调度中枢。</p></div>
+      </div>
+      <div class="notes">这里把系统从实验项目拉回贵州本地场景，尤其强调磷化工、矿山和工业园区的现实价值。</div>
+    </section>
+
+    <section class="slide" data-title="预期效益">
+      <div class="topline"><span>Value</span><span class="slide-number" data-current="10" data-total="12"></span></div>
+      <p class="kicker">预期收益</p>
+      <h2 class="section-title">从单点演示到工业智能化转型工具</h2>
+      <div class="grid g3">
+        <div class="glass card benefit-card"><h3>经济效益</h3><div class="metric">5-15%</div><p>预期OEE综合效率提升；设备故障后的停产损失降低约30%。</p></div>
+        <div class="glass card benefit-card"><h3>社会效益</h3><div class="metric">贵州工业</div><p>助力贵州传统工业从经验调度走向数据驱动、AI辅助和可解释决策。</p></div>
+        <div class="glass card benefit-card"><h3>技术效益</h3><div class="metric">Open</div><p>以开源系统推动工业AI、多智能体协作和数字孪生排程技术进步。</p></div>
+      </div>
+      <div class="notes">效益不要只讲宏大概念，要讲可度量指标：OEE、停产损失、响应时间和可复用能力。</div>
+    </section>
+
+    <section class="slide" data-title="团队介绍">
+      <div class="topline"><span>Team</span><span class="slide-number" data-current="11" data-total="12"></span></div>
+      <p class="kicker">贵州大学团队</p>
+      <h2 class="section-title">扎根贵州工业场景的工业AI研发团队</h2>
+      <div class="team-layout">
+        <div class="glass team-badge"><div class="team-mark"><span>GZU</span></div><h3>网络与信息安全专业硕士研究生团队</h3><p class="small mt">面向工业互联网安全、多智能体系统与智能制造优化开展工程化研究。</p></div>
+        <div class="team-list">
+          <div class="team-item"><b>导师</b>谭伟杰</div>
+          <div class="team-item"><b>平台</b>贵州省公共大数据重点实验室</div>
+          <div class="team-item"><b>研究方向</b>IoT安全、多智能体系统、工业AI、数字孪生</div>
+          <div class="team-item"><b>工程能力</b>FastAPI后端、React可视化、CP-SAT求解、模型适配与本地化部署</div>
+          <div class="team-item"><b>项目定位</b>顶会论文思想工程化落地，服务贵州本地工业智能化需求</div>
+        </div>
+      </div>
+      <div class="notes">团队页保持简洁可信，突出导师、实验室、研究方向和工程能力。</div>
+    </section>
+
+    <section class="slide" data-title="总结致谢">
+      <div class="topline"><span>Thanks</span><span class="slide-number" data-current="12" data-total="12"></span></div>
+      <p class="kicker">总结</p>
+      <h2 class="section-title">DynaTwin-Swarm：把先进多智能体论文能力落到贵州工业现场</h2>
+      <div class="summary-list">
+        <div class="glass summary-item"><div class="summary-index">01</div><div><h3>顶会论文工程化落地</h3><p class="small">DynaSwarm动态图选择 + ReflAct目标状态反射推理，形成可运行工业调度系统。</p></div></div>
+        <div class="glass summary-item"><div class="summary-index">02</div><div><h3>华为昇腾全栈集成</h3><p class="small">预留盘古、MindIE、GaussDB、IoTDA、ModelArts等适配器，支持本地Mock与真实接入。</p></div></div>
+        <div class="glass summary-item"><div class="summary-index">03</div><div><h3>贵州工业场景深度适配</h3><p class="small">面向磷化工、非煤矿山、智能制造产线和工业园区数字孪生。</p></div></div>
+      </div>
+      <div class="glass contact">联系方式：贵州大学网络与信息安全专业硕士研究生团队<br />GitHub：github.com/wjhard/DynaTwin-Swarm</div>
+      <div class="notes">最后收束三点：论文落地、华为生态、贵州场景。然后切到现场系统演示或回答评委问题。</div>
+    </section>
+  </div>
+
+  <div class="overview" id="overview"></div>
+  <div class="progress-bar"><span id="progress"></span></div>
+  <div class="hint">← / → 翻页 · O 概览 · F 全屏</div>
+
+  <script>
+    const slides = Array.from(document.querySelectorAll(".slide"));
+    const progress = document.getElementById("progress");
+    const overview = document.getElementById("overview");
+    let index = 0;
+
+    function show(next) {
+      const last = index;
+      index = Math.max(0, Math.min(slides.length - 1, next));
+      slides.forEach((slide, i) => {
+        slide.classList.toggle("is-active", i === index);
+        slide.classList.toggle("is-prev", i < index);
+        const num = slide.querySelector(".slide-number");
+        if (num) {
+          num.dataset.current = String(i + 1);
+          num.dataset.total = String(slides.length);
+        }
+      });
+      progress.style.width = `${((index + 1) / slides.length) * 100}%`;
+      if (last !== index) location.hash = `/${index + 1}`;
+    }
+
+    function buildOverview() {
+      overview.innerHTML = slides.map((slide, i) => `<div class="thumb" data-i="${i}"><small>${String(i + 1).padStart(2, "0")}</small><b>${slide.dataset.title || "Slide"}</b></div>`).join("");
+      overview.querySelectorAll(".thumb").forEach((thumb) => {
+        thumb.addEventListener("click", () => {
+          overview.classList.remove("open");
+          show(Number(thumb.dataset.i));
+        });
+      });
+    }
+
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "ArrowRight" || event.key === " " || event.key === "PageDown") show(index + 1);
+      if (event.key === "ArrowLeft" || event.key === "PageUp") show(index - 1);
+      if (event.key === "Home") show(0);
+      if (event.key === "End") show(slides.length - 1);
+      if (event.key.toLowerCase() === "o") overview.classList.toggle("open");
+      if (event.key.toLowerCase() === "f") document.documentElement.requestFullscreen?.();
+      if (event.key === "Escape") overview.classList.remove("open");
+    });
+
+    const match = location.hash.match(/\/(\d+)/);
+    buildOverview();
+    show(match ? Number(match[1]) - 1 : 0);
+  </script>
+</body>
+</html>

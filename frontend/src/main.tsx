@@ -4,11 +4,6 @@ import ReactECharts from "echarts-for-react";
 import * as echarts from "echarts";
 import "echarts-gl";
 import {
-  BorderBox1,
-  BorderBox8,
-  BorderBox11,
-  BorderBox12,
-  BorderBox13,
   Decoration3,
   Decoration5,
   Decoration6,
@@ -24,6 +19,7 @@ type Machine = {
   temperature_c: number;
   current_order_id?: string | null;
   efficiency?: number;
+  capabilities?: string[];
 };
 type Operation = {
   id: string;
@@ -152,6 +148,7 @@ const priorityLabel: Record<string, string> = {
 };
 const serviceLabel: Record<string, string> = {
   PanguLM: "盘古大模型",
+  Doubao: "豆包大模型",
   MindIE: "MindIE",
   GaussDB: "GaussDB",
   OBS: "OBS",
@@ -160,6 +157,22 @@ const serviceLabel: Record<string, string> = {
   FunctionGraph: "FunctionGraph",
   ModelArts: "ModelArts",
 };
+
+function inferMachineCapability(machine: Machine) {
+  const firstCapability = machine.capabilities?.[0];
+  if (firstCapability) return firstCapability;
+  const numericId = Number(String(machine.id).replace(/\D/g, ""));
+  if (numericId >= 1 && numericId <= 5) return "cutting";
+  if (numericId >= 6 && numericId <= 10) return "milling";
+  if (numericId >= 11 && numericId <= 15) return "precision";
+  return "general";
+}
+
+function machineStatusText(status: string) {
+  if (status === "failed") return "故障";
+  if (status === "busy") return "运行中";
+  return "可用";
+}
 
 async function getJson(path: string) {
   const response = await fetch(`${API}${path}`);
@@ -280,7 +293,7 @@ function useScreenScale() {
 function PanelTitle({ title }: { title: string }) {
   return (
     <div className="panel-title">
-      <Decoration3 className="panel-title-decoration" />
+      <span className="panel-title-mark" />
       <span>{title}</span>
       <i />
     </div>
@@ -313,15 +326,28 @@ function MachineRow({ machine, nowMinute, recoveryMinute }: { machine: Machine; 
   const hot = machine.temperature_c > 85;
   const danger = machine.temperature_c > 90;
   const recovery = failed && recoveryMinute !== undefined ? Math.max(0, Math.ceil(recoveryMinute - nowMinute)) : null;
+  const capability = inferMachineCapability(machine);
+  const currentJob = machine.current_order_id || "待命";
+  const efficiency = Math.round((machine.efficiency ?? (failed ? 0 : 0.9)) * 100);
   return (
     <div className={`machine-row ${machine.status}`}>
-      <span className={`machine-dot ${machine.status}`} />
       <div className="machine-info">
-        <strong>{machine.id}</strong>
-        <span>{machine.name}</span>
+        <div className="machine-head">
+          <strong>{machine.id}</strong>
+          <span className={`machine-status-badge ${machine.status}`}>{machineStatusText(machine.status)}</span>
+        </div>
+        <span className="machine-name">{machine.name}</span>
+        <span className="machine-route">
+          能力: {capability} | 当前: {currentJob}
+        </span>
+        <div className="machine-footer">
+          <span className={`machine-temp ${danger ? "danger" : hot ? "hot" : ""}`}>{Math.round(machine.temperature_c)}°C</span>
+          <span className="machine-efficiency">
+            <i style={{ width: `${Math.max(0, Math.min(100, efficiency))}%` }} />
+          </span>
+        </div>
         {recovery !== null && <em>预计 {recovery} 分钟后自动恢复</em>}
       </div>
-      <div className={`machine-temp ${danger ? "danger" : hot ? "hot" : ""}`}>{Math.round(machine.temperature_c)}°C</div>
     </div>
   );
 }
@@ -569,12 +595,16 @@ function App() {
 
   async function runA2C() {
     setLoadingAction("a2c");
+    console.log("A2C triggered");
     try {
+      console.log("A2C request start", "/api/experiments/run_a2c");
       const data = await postJson("/api/experiments/run_a2c");
+      console.log("A2C request success", data);
       setExperiment(data);
-      notify("success", "A2C训练完成，拓扑偏好已更新");
-    } catch {
-      notify("error", "A2C训练失败，请检查后端服务");
+      notify("success", "✅ A2C训练完成");
+    } catch (error) {
+      console.log("A2C request failed", error);
+      notify("error", `A2C训练失败，请检查后端服务：${error instanceof Error ? error.message : "未知错误"}`);
     } finally {
       setLoadingAction(null);
     }
@@ -606,23 +636,36 @@ function App() {
     [state]
   );
   const orderBoardConfig = useMemo(
-    () => ({
-      header: ["订单ID", "优先级", "截止", "工序"],
-      data: allOrders.map((order) => [
-        order.id,
-        priorityLabel[order.priority] ?? order.priority,
-        `${order.due_minute}分`,
-        String(order.operations.length),
-      ]),
-      rowNum: 7,
-      headerHeight: 34,
-      columnWidth: [90, 80, 82, 58],
-      align: ["center", "center", "center", "center"],
-      headerBGC: "rgba(0, 212, 255, 0.16)",
-      oddRowBGC: "rgba(4, 32, 62, 0.45)",
-      evenRowBGC: "rgba(1, 20, 42, 0.7)",
-      hoverPause: true,
-    }),
+    () => {
+      const priorityOrder: Record<string, number> = { urgent: 0, high: 1, normal: 2 };
+      const sortedOrders = [...allOrders].sort((a, b) => {
+        const pa = priorityOrder[a.priority] ?? 2;
+        const pb = priorityOrder[b.priority] ?? 2;
+        return pa !== pb ? pa - pb : a.due_minute - b.due_minute;
+      });
+      return {
+        header: ["订单ID", "优先级", "截止(分)", "工序数", "工艺路线"],
+        data: sortedOrders.map((order) => [
+          order.id,
+          order.priority === "urgent"
+            ? '<span style="color:#FF4444">紧急</span>'
+            : order.priority === "high"
+              ? '<span style="color:#FFB800">高优先</span>'
+              : "普通",
+          String(order.due_minute),
+          String(order.operations.length),
+          order.operations.map((operation) => operation.required_capability || "-").join("→").slice(0, 20),
+        ]),
+        rowNum: 10,
+        headerHeight: 34,
+        columnWidth: [80, 65, 70, 55, 120],
+        align: ["center", "center", "center", "center", "left"],
+        headerBGC: "rgba(0, 212, 255, 0.16)",
+        oddRowBGC: "rgba(4, 32, 62, 0.45)",
+        evenRowBGC: "rgba(1, 20, 42, 0.7)",
+        hoverPause: true,
+      };
+    },
     [allOrders]
   );
 
@@ -630,8 +673,8 @@ function App() {
     experiment?.history?.length ? Number(experiment.history[experiment.history.length - 1]?.reward ?? 0).toFixed(2) : "未训练";
 
   return (
-    <div className="screen-viewport">
-      <div className="big-screen" style={{ zoom: scale }}>
+    <div className="screen-viewport" style={{ height: `${1080 * scale}px`, width: `${1920 * scale}px` }}>
+      <div className="big-screen" style={{ transform: `scale(${scale})`, transformOrigin: "top left", width: 1920, minHeight: 1080 }}>
         <div className="screen-glow" />
         <header className="screen-header">
           <div className="header-left">
@@ -656,16 +699,16 @@ function App() {
 
         <main className="screen-body">
           <section className="screen-column left-column">
-            <BorderBox8 className="panel">
+            <div className="panel">
               <PanelTitle title="生产指标" />
               <div className="production-metrics">
                 <DigitalMetric label="OEE综合效率" value={oee.oee} suffix="%" color={oeeColor(oee.oee)} />
                 <DigitalMetric label="在制订单数" value={allOrders.length} color="#00D4FF" />
                 <DigitalMetric label="完工预估分钟" value={makespan} color="#E8F4FF" />
               </div>
-            </BorderBox8>
+            </div>
 
-            <BorderBox12 className="panel">
+            <div className="panel">
               <PanelTitle title="设备状态" />
               <div className="machine-list">
                 {machines.map((machine) => (
@@ -681,14 +724,14 @@ function App() {
               <div className="machine-summary">
                 {normalMachineCount}/{machines.length || 0}台正常运行
               </div>
-            </BorderBox12>
+            </div>
 
-            <BorderBox13 className="panel">
+            <div className="panel">
               <PanelTitle title="活跃告警" />
               <div className="scroll-board-wrap">
                 <ScrollBoard config={alertBoardConfig} />
               </div>
-            </BorderBox13>
+            </div>
           </section>
 
           <section className="screen-column center-column">
@@ -699,25 +742,25 @@ function App() {
               <KpiBox title="完工时间" value={`${makespan || 0} 分`} color="#00FF88" />
             </div>
 
-            <BorderBox8 className="panel factory-panel">
+            <div className="panel factory-panel">
               <div className="visual-title">
                 <span>3D工厂布局 · 工厂实时状态</span>
                 <Decoration6 className="visual-decoration" />
               </div>
               <ReactECharts option={factory3DOption} className="factory-chart" notMerge lazyUpdate />
-            </BorderBox8>
+            </div>
 
-            <BorderBox12 className="panel gantt-panel">
+            <div className="panel gantt-panel">
               <div className="visual-title compact">
                 <span>排程甘特图</span>
                 <Decoration3 className="visual-decoration-small" />
               </div>
               <ReactECharts option={ganttOption} className="gantt-chart" notMerge lazyUpdate />
-            </BorderBox12>
+            </div>
           </section>
 
           <section className="screen-column right-column">
-            <BorderBox8 className="panel ai-panel">
+            <div className="panel ai-panel">
               <PanelTitle title="AI决策过程" />
               <div className="topology-card">
                 <span>协作拓扑</span>
@@ -734,9 +777,9 @@ function App() {
                 ))}
                 {!logs.length && <div className="empty-text">等待Agent推理日志</div>}
               </div>
-            </BorderBox8>
+            </div>
 
-            <BorderBox12 className="panel order-panel">
+            <div className="panel order-panel">
               <PanelTitle title={`订单队列 · ${allOrders.length}`} />
               <div className="scroll-board-wrap order-board">
                 <ScrollBoard config={orderBoardConfig} />
@@ -746,9 +789,9 @@ function App() {
                 <span className="high">高优先 {allOrders.filter((order) => order.priority === "high").length}</span>
                 <span>普通 {allOrders.filter((order) => order.priority === "normal").length}</span>
               </div>
-            </BorderBox12>
+            </div>
 
-            <BorderBox13 className="panel benchmark-panel">
+            <div className="panel benchmark-panel">
               <PanelTitle title="基准测试" />
               <ReactECharts option={benchmarkOption} className="benchmark-chart" notMerge lazyUpdate />
               <div className="dataset-buttons">
@@ -759,7 +802,7 @@ function App() {
                 ))}
                 {!datasets.length && <span className="empty-text">暂无数据集</span>}
               </div>
-            </BorderBox13>
+            </div>
           </section>
         </main>
 
@@ -800,11 +843,12 @@ function App() {
 
 function KpiBox({ title, value, color }: { title: string; value: string; color: string }) {
   return (
-    <BorderBox11 className="kpi-box" title={title} titleWidth={120}>
+    <div className="kpi-box">
+      <span className="kpi-box-title">{title}</span>
       <div className="kpi-box-value" style={{ color }}>
         {value}
       </div>
-    </BorderBox11>
+    </div>
   );
 }
 
@@ -820,11 +864,11 @@ function DvButton({
   children: React.ReactNode;
 }) {
   return (
-    <BorderBox1 className={`dv-button-wrap ${tone}`}>
+    <div className={`dv-button-wrap ${tone}`}>
       <button className="dv-button" onClick={onClick} disabled={loading}>
         {loading ? "执行中..." : children}
       </button>
-    </BorderBox1>
+    </div>
   );
 }
 
@@ -930,8 +974,7 @@ function buildFactory3DOption(machines: Machine[]) {
 }
 
 function buildGanttOption(items: ScheduleItem[], makespan: number) {
-  const visible = items.slice(0, 18);
-  if (!visible.length) {
+  if (!items.length) {
     return {
       backgroundColor: "transparent",
       graphic: {
@@ -952,16 +995,17 @@ function buildGanttOption(items: ScheduleItem[], makespan: number) {
   }
   const machines = Array.from(new Set(items.map((item) => item.machine_id)));
   const colorMap = new Map(machines.map((machine, index) => [machine, MACHINE_COLORS[index % MACHINE_COLORS.length]]));
-  const categories = visible.map((item) => item.operation_id);
+  const categories = items.map((item) => item.operation_id);
+  const endMax = Math.max(...items.map((item) => item.end_minute), 100);
   return {
     backgroundColor: "transparent",
-    grid: { left: 90, right: 26, top: 18, bottom: 30 },
+    grid: { left: "120px", right: "20px", top: "10px", bottom: "30px", containLabel: false },
     tooltip: {
       backgroundColor: "rgba(2, 11, 24, 0.92)",
       borderColor: "#00D4FF",
       textStyle: { color: "#E8F4FF" },
       formatter: (params: any) => {
-        const item = visible[params.dataIndex];
+        const item = items[params.dataIndex];
         if (!item || params.seriesName === "offset") return "";
         return `${item.operation_id}<br/>机器：${item.machine_id}<br/>开始：${item.start_minute} 分钟<br/>结束：${item.end_minute} 分钟<br/>时长：${item.end_minute - item.start_minute} 分钟`;
       },
@@ -969,7 +1013,7 @@ function buildGanttOption(items: ScheduleItem[], makespan: number) {
     xAxis: {
       type: "value",
       min: 0,
-      max: Math.max(makespan, 120),
+      max: endMax,
       axisLine: { lineStyle: { color: "#0D3A6E" } },
       splitLine: { lineStyle: { color: "#0A2540" } },
       axisLabel: { color: "#5B8DB8", fontFamily: "Courier New" },
@@ -979,55 +1023,37 @@ function buildGanttOption(items: ScheduleItem[], makespan: number) {
       inverse: true,
       data: categories,
       axisLine: { lineStyle: { color: "#0D3A6E" } },
-      axisLabel: { color: "#E8F4FF", fontSize: 10 },
+      axisLabel: { color: "#E8F4FF", fontSize: 10, width: 110, overflow: "truncate" },
     },
     series: [
       {
+        name: "offset",
+        type: "bar",
+        stack: "gantt",
+        data: items.map((item) => item.start_minute),
+        barMaxWidth: 16,
+        itemStyle: { color: "transparent" },
+        emphasis: { disabled: true },
+        tooltip: { show: false },
+      },
+      {
         name: "duration",
-        type: "custom",
-        data: visible.map((item, index) => [
-          item.start_minute,
-          Math.max(1, item.end_minute - item.start_minute),
-          index,
-          item.machine_id,
-          item.operation_id,
-        ]),
-        renderItem: (params: any, api: any) => {
-          const start = Number(api.value(0));
-          const duration = Number(api.value(1));
-          const categoryIndex = Number(api.value(2));
-          const machineId = String(api.value(3));
-          const startPoint = api.coord([start, categoryIndex]);
-          const endPoint = api.coord([start + duration, categoryIndex]);
-          const height = 14;
-          const base = colorMap.get(machineId) ?? "#00D4FF";
-          const shape = echarts.graphic.clipRectByRect(
-            {
-              x: startPoint[0],
-              y: startPoint[1] - height / 2,
-              width: Math.max(2, endPoint[0] - startPoint[0]),
-              height,
-            },
-            {
-              x: params.coordSys.x,
-              y: params.coordSys.y,
-              width: params.coordSys.width,
-              height: params.coordSys.height,
-            }
-          );
-          if (!shape) return null;
-          return {
-            type: "rect",
-            shape,
-            style: {
-              fill: new echarts.graphic.LinearGradient(0, 0, 1, 0, [
-                { offset: 0, color: "#053A68" },
-                { offset: 1, color: base },
-              ]),
-              shadowBlur: 6,
-              shadowColor: base,
-            },
-          };
+        type: "bar",
+        stack: "gantt",
+        data: items.map((item) => item.end_minute - item.start_minute),
+        barMaxWidth: 16,
+        itemStyle: {
+          borderRadius: [7, 7, 7, 7],
+          shadowBlur: 6,
+          shadowColor: "#00D4FF",
+          color: (params: any) => {
+            const item = items[params.dataIndex];
+            const base = colorMap.get(item?.machine_id ?? "") ?? "#00D4FF";
+            return new echarts.graphic.LinearGradient(0, 0, 1, 0, [
+              { offset: 0, color: "#053A68" },
+              { offset: 1, color: base },
+            ]);
+          },
         },
       },
     ],
@@ -1035,7 +1061,26 @@ function buildGanttOption(items: ScheduleItem[], makespan: number) {
 }
 
 function buildBenchmarkOption(rows: BenchmarkRow[]) {
-  const data = rows.length ? rows : [{ datasetName: "等待运行", makespan: 0 }];
+  if (!rows.length) {
+    return {
+      backgroundColor: "transparent",
+      graphic: {
+        type: "text",
+        left: "center",
+        top: "middle",
+        style: {
+          text: "点击上方数据集按钮运行基准测试",
+          fill: "#5B8DB8",
+          fontSize: 15,
+          fontWeight: 600,
+        },
+      },
+      xAxis: { type: "category", data: [], show: false },
+      yAxis: { type: "value", show: false },
+      series: [{ type: "bar", data: [] }],
+    };
+  }
+  const data = rows;
   return {
     backgroundColor: "transparent",
     grid: { left: 45, right: 18, top: 20, bottom: 34 },

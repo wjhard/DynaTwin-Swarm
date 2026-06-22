@@ -3,9 +3,12 @@ from __future__ import annotations
 import os
 from typing import Any, Dict
 
+from dotenv import load_dotenv
 from fastapi import Body, FastAPI, HTTPException, WebSocket
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+
+load_dotenv()
 
 from backend.service import DynaTwinService
 from swarm.integrations.huawei import HuaweiIntegrationConfig

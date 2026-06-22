@@ -161,6 +161,11 @@ cython_debug/
 
 # Others
 *.DS_Store
+node_modules/
+.claude/
+.agents/
+skills-lock.json
+~$*.docx
 
 # log
 result/

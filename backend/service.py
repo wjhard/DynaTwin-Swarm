@@ -20,7 +20,7 @@ class DynaTwinService:
 
     def run_public_dataset(self, dataset_id: str) -> Dict[str, Any]:
         state = public_jobshop_state(dataset_id)
-        return self.run_state(state)
+        return self.run_state(state, solver_time_limit_seconds=300.0)
 
     def public_datasets(self) -> Dict[str, Any]:
         return {"datasets": list_public_jobshop_datasets()}
@@ -30,7 +30,7 @@ class DynaTwinService:
         selection = RuleBasedGraphSelector().select(profile)
         traces = IndustrialTopologyExecutor(provider=self.provider).execute(state, profile, selection)
         has_failed_machine = any(getattr(machine, "status", "") == "failed" for machine in state.machines)
-        time_limit_seconds = solver_time_limit_seconds if solver_time_limit_seconds is not None else (8 if has_failed_machine else 3)
+        time_limit_seconds = solver_time_limit_seconds if solver_time_limit_seconds is not None else (15.0 if has_failed_machine else 30.0)
         solver_result = IndustrialScheduleSolver(time_limit_seconds=time_limit_seconds).solve(state, agent_call_count=len(traces))
         best_plan = solver_result["best_plan"]
         alternatives = solver_result["alternative_plans"]
@@ -190,7 +190,7 @@ class DynaTwinService:
         )
         if needs_reschedule:
             has_failed_machine = any(getattr(machine, "status", "") == "failed" for machine in new_state.machines)
-            return self.run_state(new_state, solver_time_limit_seconds=8 if has_failed_machine else 3)
+            return self.run_state(new_state, solver_time_limit_seconds=15.0 if has_failed_machine else 30.0)
         self.repository.save_state(new_state)
         for event in new_state.events[-1:]:
             self.repository.add_event(event)

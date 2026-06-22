@@ -15,6 +15,8 @@ class HuaweiIntegrationConfig:
     training_provider: str = "local"
     pangu_base_url: str = ""
     pangu_api_key: str = ""
+    doubao_api_key: str = ""
+    doubao_model: str = ""
     mindie_base_url: str = ""
     gaussdb_dsn: str = ""
     obs_bucket: str = ""
@@ -34,6 +36,8 @@ class HuaweiIntegrationConfig:
             training_provider=os.getenv("TRAINING_PROVIDER", "local"),
             pangu_base_url=os.getenv("PANGU_BASE_URL", ""),
             pangu_api_key=os.getenv("PANGU_API_KEY", ""),
+            doubao_api_key=os.getenv("DOUBAO_API_KEY", ""),
+            doubao_model=os.getenv("DOUBAO_MODEL", ""),
             mindie_base_url=os.getenv("MINDIE_BASE_URL", ""),
             gaussdb_dsn=os.getenv("GAUSSDB_DSN", ""),
             obs_bucket=os.getenv("OBS_BUCKET", ""),
@@ -46,6 +50,7 @@ class HuaweiIntegrationConfig:
     def status(self) -> Dict[str, str]:
         return {
             "PanguLM": "configured" if self.pangu_base_url and self.pangu_api_key else "mock",
+            "Doubao": "configured" if self.doubao_api_key and self.doubao_model else "mock",
             "MindIE": "configured" if self.mindie_base_url else "mock",
             "GaussDB": "connected" if self.gaussdb_dsn and self.database_provider == "gaussdb" else "sqlite fallback",
             "OBS": "connected" if self.obs_bucket and self.object_storage_provider == "obs" else "local fallback",

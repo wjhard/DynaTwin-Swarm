@@ -227,7 +227,7 @@ class RewardCalculator:
 
 
 class IndustrialScheduleSolver:
-    def __init__(self, time_limit_seconds: float = 5.0) -> None:
+    def __init__(self, time_limit_seconds: float = 60.0) -> None:
         self.time_limit_seconds = time_limit_seconds
         self.validator = ConstraintValidator()
         self.reward_calculator = RewardCalculator()
@@ -365,6 +365,9 @@ class IndustrialScheduleSolver:
 
         solver = cp_model.CpSolver()
         solver.parameters.max_time_in_seconds = self.time_limit_seconds
+        solver.parameters.num_search_workers = 8
+        solver.parameters.linearization_level = 2
+        solver.parameters.symmetry_level = 2
         status = solver.Solve(model)
         if status not in {cp_model.OPTIMAL, cp_model.FEASIBLE}:
             plan = self._greedy_schedule(state, items)
